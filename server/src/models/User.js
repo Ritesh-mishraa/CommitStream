@@ -6,6 +6,15 @@ const userSchema = new mongoose.Schema({
         required: true,
         unique: true,
     },
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+    },
+    passwordHash: {
+        type: String,
+        required: true,
+    },
     avatarColor: {
         type: String,
         default: '#4f46e5' // Indigo-600

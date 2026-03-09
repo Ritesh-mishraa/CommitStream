@@ -5,6 +5,10 @@ const branchSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    project: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Project'
+    },
     owner: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',

@@ -2,7 +2,8 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useSocket } from '../hooks/useSocket';
 import { useWebRTC } from '../hooks/useWebRTC';
-import { Mic, MicOff, Video, VideoOff, PhoneOff, Send, Users, FileType2 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Mic, MicOff, Video, VideoOff, PhoneOff, Send, Users, FileType2, Copy, CheckCircle } from 'lucide-react';
 
 const VideoElement = ({ stream, isLocal, muted }) => {
     const videoRef = useRef(null);
@@ -37,14 +38,16 @@ const Room = () => {
     const { id: roomId } = useParams();
     const location = useLocation();
     const navigate = useNavigate();
-    const username = location.state?.username || `Guest_${Math.floor(Math.random() * 1000)}`;
+    const { user, token } = useAuth();
+    const username = location.state?.username || user?.username || 'Guest';
 
-    const { socket, isConnected } = useSocket(username);
+    const { socket, isConnected } = useSocket(username, token);
     const { localStream, remoteStreams, toggleMute, toggleVideo, isMuted, isVideoOff } = useWebRTC(socket, roomId);
 
     const [activeTab, setActiveTab] = useState('chat'); // 'chat' or 'files'
     const [messages, setMessages] = useState([]);
     const [chatInput, setChatInput] = useState('');
+    const [isLinkCopied, setIsLinkCopied] = useState(false);
 
     // Connect and join room
     useEffect(() => {
@@ -82,6 +85,12 @@ const Room = () => {
         navigate('/dashboard');
     };
 
+    const handleCopyLink = () => {
+        navigator.clipboard.writeText(window.location.href);
+        setIsLinkCopied(true);
+        setTimeout(() => setIsLinkCopied(false), 2000);
+    };
+
     return (
         <div className="h-screen w-full bg-zinc-950 flex flex-col font-sans overflow-hidden">
 
@@ -99,6 +108,10 @@ const Room = () => {
 
                 {/* Controls */}
                 <div className="flex items-center gap-3">
+                    <button onClick={handleCopyLink} className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-2 mr-2">
+                        {isLinkCopied ? <CheckCircle className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                        {isLinkCopied ? "Copied!" : "Copy Link"}
+                    </button>
                     <button onClick={toggleMute} className={`p-2.5 rounded-full transition-colors ${isMuted ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'}`}>
                         {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                     </button>

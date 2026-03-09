@@ -8,6 +8,8 @@ import connectDB from './config/db.js';
 import roomsRouter from './routes/rooms.js';
 import branchesRouter from './routes/branches.js';
 import conflictsRouter from './routes/conflicts.js';
+import authRouter from './routes/auth.js';
+import projectsRouter from './routes/projects.js';
 import { setupSwagger } from './config/swagger.js';
 
 dotenv.config();
@@ -33,6 +35,8 @@ app.use(express.json());
 setupSwagger(app);
 
 // Routes
+app.use('/api/auth', authRouter);
+app.use('/api/projects', projectsRouter);
 app.use('/api/rooms', roomsRouter);
 app.use('/api/branches', branchesRouter);
 app.use('/api/conflicts', conflictsRouter);

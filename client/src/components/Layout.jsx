@@ -1,7 +1,9 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { GitMerge, Activity, LayoutDashboard, TerminalSquare } from 'lucide-react';
+import { GitMerge, Activity, LayoutDashboard, TerminalSquare, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const Layout = () => {
+    const { user, logout } = useAuth();
     return (
         <div className="flex h-screen w-full bg-zinc-950 text-zinc-400 overflow-hidden font-sans">
 
@@ -40,15 +42,23 @@ const Layout = () => {
 
                 <div className="mt-auto p-4 border-t border-zinc-800/50">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700">
-                            <span className="text-xs font-medium text-zinc-300">U</span>
+                        <div
+                            className="w-8 h-8 rounded-full flex items-center justify-center border border-zinc-700 text-white font-medium"
+                            style={{ backgroundColor: user?.avatarColor || '#333' }}
+                        >
+                            <span className="text-xs">{user?.username?.charAt(0).toUpperCase()}</span>
                         </div>
-                        <div className="flex flex-col">
-                            <span className="text-sm text-zinc-200 font-medium">Current User</span>
-                            <span className="text-xs text-zinc-500 flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 block"></span> Connected
-                            </span>
+                        <div className="flex flex-col flex-1">
+                            <span className="text-sm text-zinc-200 font-medium">{user?.username}</span>
+                            <span className="text-[10px] text-zinc-500 truncate max-w-[120px]">{user?.email}</span>
                         </div>
+                        <button
+                            onClick={logout}
+                            title="Logout"
+                            className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-zinc-800/50 rounded transition-colors"
+                        >
+                            <LogOut className="w-4 h-4" />
+                        </button>
                     </div>
                 </div>
             </aside>

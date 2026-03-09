@@ -1,20 +1,25 @@
 import { useState, useEffect } from 'react';
 import { GitBranch, GitMerge, FileCode2, Package, Check, AlertTriangle, ShieldAlert, Cpu } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const API_BASE = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000/api';
 
 const ConflictPredictor = () => {
+    const { token } = useAuth();
     const [branches, setBranches] = useState([]);
     const [selectedBranches, setSelectedBranches] = useState([]);
     const [isPredicting, setIsPredicting] = useState(false);
     const [report, setReport] = useState(null);
 
     useEffect(() => {
-        fetch(`${API_BASE}/branches`)
+        if (!token) return;
+        fetch(`${API_BASE}/branches`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(r => r.json())
             .then(data => setBranches(data))
             .catch(console.error);
-    }, []);
+    }, [token]);
 
     const toggleBranch = (id) => {
         setSelectedBranches(prev => {
@@ -32,7 +37,10 @@ const ConflictPredictor = () => {
         try {
             const res = await fetch(`${API_BASE}/conflicts/predict`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     branchIdA: selectedBranches[0],
                     branchIdB: selectedBranches[1]
@@ -88,8 +96,8 @@ const ConflictPredictor = () => {
                                     key={branch._id}
                                     onClick={() => toggleBranch(branch._id)}
                                     className={`p-4 rounded-md border cursor-pointer transition-all ${isSelected
-                                            ? 'bg-indigo-500/10 border-indigo-500/50 relative'
-                                            : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'
+                                        ? 'bg-indigo-500/10 border-indigo-500/50 relative'
+                                        : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700'
                                         }`}
                                 >
                                     <div className="flex justify-between items-start">

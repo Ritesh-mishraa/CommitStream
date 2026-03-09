@@ -1,23 +1,20 @@
 import mongoose from 'mongoose';
 
-const roomSchema = new mongoose.Schema({
+const projectSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
+        trim: true
     },
-    project: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Project'
-    },
-    host: {
+    owner: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
-    participants: [{
+    members: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
-    }],
+    }]
 }, { timestamps: true });
 
-export default mongoose.model('Room', roomSchema);
+export default mongoose.model('Project', projectSchema);

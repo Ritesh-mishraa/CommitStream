@@ -3,14 +3,16 @@ import { io } from 'socket.io-client';
 
 const SOCKET_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
 
-export const useSocket = (username) => {
+export const useSocket = (username, token) => {
     const socketRef = useRef(null);
     const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
-        if (!username) return;
+        if (!username || !token) return;
 
-        socketRef.current = io(SOCKET_URL);
+        socketRef.current = io(SOCKET_URL, {
+            auth: { token }
+        });
 
         socketRef.current.on('connect', () => {
             setIsConnected(true);
