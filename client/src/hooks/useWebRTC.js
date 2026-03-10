@@ -74,6 +74,7 @@ export const useWebRTC = (socket, roomId) => {
 
     // 2. Handle Socket Events for Signaling
     useEffect(() => {
+        // DO NOT attach signaling listeners until local stream is fully acquired
         if (!socket || !localStream) return;
 
         // When someone joins, we (the existing users) initiate the offer
@@ -124,6 +125,9 @@ export const useWebRTC = (socket, roomId) => {
         socket.on('webrtc:ice-received', handleIceReceived);
         socket.on('user-left', handleUserLeft);
 
+        // Tell the server we are NOW ready to receive 'user-joined' events
+        socket.emit('webrtc:ready');
+
         return () => {
             socket.off('user-joined', handleUserJoined);
             socket.off('webrtc:offer-received', handleOfferReceived);
@@ -155,11 +159,24 @@ export const useWebRTC = (socket, roomId) => {
         }
     };
 
+    const disconnect = useCallback(() => {
+        if (localStreamRef.current) {
+            localStreamRef.current.getTracks().forEach(track => track.stop());
+            localStreamRef.current = null;
+            setLocalStream(null);
+        }
+
+        Object.values(peerConnections.current).forEach(pc => pc.close());
+        peerConnections.current = {};
+        setRemoteStreams({});
+    }, []);
+
     return {
         localStream,
         remoteStreams,
         toggleMute,
         toggleVideo,
+        disconnect,
         isMuted,
         isVideoOff
     };

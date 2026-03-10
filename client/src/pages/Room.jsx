@@ -42,7 +42,7 @@ const Room = () => {
     const username = location.state?.username || user?.username || 'Guest';
 
     const { socket, isConnected } = useSocket(username, token);
-    const { localStream, remoteStreams, toggleMute, toggleVideo, isMuted, isVideoOff } = useWebRTC(socket, roomId);
+    const { localStream, remoteStreams, toggleMute, toggleVideo, disconnect, isMuted, isVideoOff } = useWebRTC(socket, roomId);
 
     const [activeTab, setActiveTab] = useState('chat'); // 'chat' or 'files'
     const [messages, setMessages] = useState([]);
@@ -65,6 +65,13 @@ const Room = () => {
         }
     }, [socket, isConnected, roomId, username]);
 
+    // Cleanup media on unmount
+    useEffect(() => {
+        return () => {
+            disconnect();
+        };
+    }, [disconnect]);
+
     const handleSendMessage = (e) => {
         e.preventDefault();
         if (!chatInput.trim() || !socket) return;
@@ -82,6 +89,7 @@ const Room = () => {
     };
 
     const handleLeave = () => {
+        disconnect();
         navigate('/dashboard');
     };
 

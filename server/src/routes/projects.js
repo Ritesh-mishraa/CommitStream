@@ -122,4 +122,43 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/projects/{id}/stats:
+ *   get:
+ *     summary: Get repository statistics for a project
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Project statistics
+ */
+router.get('/:id/stats', async (req, res) => {
+    try {
+        // Query the Branch collection dynamically to count active branches
+        const Branch = (await import('../models/Branch.js')).default;
+        const branchCount = await Branch.countDocuments({ project: req.params.id });
+
+        // Mocking PRs and last commit for MVP as those require git integrations
+        res.json({
+            activeBranches: branchCount,
+            openPRs: Math.floor(Math.random() * 5), // Mock data
+            lastCommit: {
+                hash: Math.random().toString(16).substring(2, 9),
+                message: 'Update dependencies',
+                time: 'Just now',
+                author: 'System'
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;

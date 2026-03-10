@@ -28,13 +28,17 @@ export const handleSocketConnection = (socket) => {
         socket.join(roomId);
         socket.roomId = roomId;
         socket.username = username;
-
-        // Broadcast to others in the room
-        socket.to(roomId).emit('user-joined', {
-            socketId: socket.id,
-            username
-        });
         console.log(`${username} joined room ${roomId}`);
+    });
+
+    socket.on('webrtc:ready', () => {
+        if (!socket.roomId) return;
+        // Broadcast to others in the room ONLY when media is ready
+        socket.to(socket.roomId).emit('user-joined', {
+            socketId: socket.id,
+            username: socket.username
+        });
+        console.log(`${socket.username} is WebRTC ready in ${socket.roomId}`);
     });
 
     socket.on('leave-room', () => {

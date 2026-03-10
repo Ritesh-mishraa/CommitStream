@@ -10,6 +10,7 @@ import branchesRouter from './routes/branches.js';
 import conflictsRouter from './routes/conflicts.js';
 import authRouter from './routes/auth.js';
 import projectsRouter from './routes/projects.js';
+import tasksRouter from './routes/tasks.js';
 import { setupSwagger } from './config/swagger.js';
 
 dotenv.config();
@@ -40,6 +41,7 @@ app.use('/api/projects', projectsRouter);
 app.use('/api/rooms', roomsRouter);
 app.use('/api/branches', branchesRouter);
 app.use('/api/conflicts', conflictsRouter);
+app.use('/api/tasks', tasksRouter);
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', time: new Date().toISOString() });
