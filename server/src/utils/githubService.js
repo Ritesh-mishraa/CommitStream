@@ -57,21 +57,45 @@ export const compareBranches = async (repo, base, head, pat = null) => {
 };
 
 /**
- * Compare two branches exactly at their tips (2-dot compare)
+ * Fetch the SHA of a specific file in a branch
+ */
+const getFileSha = async (client, repo, branch, path) => {
+    try {
+        const { data } = await client.get(`/repos/${repo}/contents/${path}?ref=${branch}`);
+        return data.sha;
+    } catch (err) {
+        if (err.response?.status === 404) return null; // File doesn't exist here
+        throw err;
+    }
+};
+
+/**
+ * Filter a list of conflicting files to only return the ones that truly differ
+ * between the two branch tips (i.e. they are not exactly the same).
  * @param {string} repo - Format "owner/repo"
  * @param {string} base - Base branch name
  * @param {string} head - Head branch name
+ * @param {string[]} files - List of file paths to check
  * @param {string} pat - Optional Personal Access Token
  */
-export const compareBranchesExact = async (repo, base, head, pat = null) => {
-    try {
-        const client = getGithubClient(pat);
-        const res = await client.get(`/repos/${repo}/compare/${base}..${head}`);
-        return res.data;
-    } catch (error) {
-        console.error(`Failed to exactly compare ${base} with ${head} in ${repo}:`, error.message);
-        throw error;
+export const filterExactConflicts = async (repo, base, head, files, pat = null) => {
+    const client = getGithubClient(pat);
+    const trueConflicts = [];
+
+    for (const file of files) {
+        // Fetch the SHA of the file on both branch tips
+        const [shaBase, shaHead] = await Promise.all([
+            getFileSha(client, repo, base, file),
+            getFileSha(client, repo, head, file)
+        ]);
+
+        // If the SHAs are different, they have different content, so it's a real conflict
+        if (shaBase !== shaHead) {
+            trueConflicts.push(file);
+        }
     }
+
+    return trueConflicts;
 };
 
 /**

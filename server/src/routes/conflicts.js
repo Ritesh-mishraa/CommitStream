@@ -2,7 +2,7 @@ import express from 'express';
 import Project from '../models/Project.js';
 import User from '../models/User.js';
 import ConflictReport from '../models/ConflictReport.js';
-import { compareBranches, compareBranchesExact } from '../utils/githubService.js';
+import { compareBranches, filterExactConflicts } from '../utils/githubService.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { resolveConflictWithAI } from '../utils/aiService.js';
 
@@ -44,12 +44,11 @@ router.post('/predict', authMiddleware, async (req, res) => {
         const user = await User.findById(req.user._id);
         const pat = user?.githubPat || null;
 
-        let compareHead, compareBase, exactDiff;
+        let compareHead, compareBase;
         try {
-            [compareHead, compareBase, exactDiff] = await Promise.all([
+            [compareHead, compareBase] = await Promise.all([
                 compareBranches(project.githubRepo, branchIdA, branchIdB, pat),
-                compareBranches(project.githubRepo, branchIdB, branchIdA, pat),
-                compareBranchesExact(project.githubRepo, branchIdA, branchIdB, pat)
+                compareBranches(project.githubRepo, branchIdB, branchIdA, pat)
             ]);
         } catch (compareError) {
             console.error("GitHub compare failed:", compareError.message);
@@ -63,12 +62,13 @@ router.post('/predict', authMiddleware, async (req, res) => {
 
         const filesHead = compareHead.files ? compareHead.files.map(f => f.filename) : [];
         const filesBase = compareBase.files ? compareBase.files.map(f => f.filename) : [];
-        const diffAtTips = exactDiff.files ? exactDiff.files.map(f => f.filename) : [];
 
-        // A file is only a conflict if it was modified in BOTH branches and still differs at their tips
-        const conflictingFiles = filesHead
-            .filter(file => filesBase.includes(file))
-            .filter(file => diffAtTips.includes(file));
+        // 1. Files modified in BOTH branches since they diverged
+        const intersectionFiles = filesHead.filter(file => filesBase.includes(file));
+
+        // 2. Filter down to files that ACTUALLY have different content at the tips right now
+        // (if they hit our dual-commit resolution, they will have identical SHAs and be filtered out!)
+        const conflictingFiles = await filterExactConflicts(project.githubRepo, branchIdA, branchIdB, intersectionFiles, pat);
 
         let severity = 'LOW';
         let autoResolved = [];
