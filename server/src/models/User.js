@@ -22,6 +22,14 @@ const userSchema = new mongoose.Schema({
     socketId: {
         type: String,
         default: null
+    },
+    githubPat: {
+        type: String,
+        default: null
+    },
+    githubUsername: {
+        type: String,
+        default: null
     }
 }, { timestamps: true });
 

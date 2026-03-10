@@ -14,7 +14,17 @@ const projectSchema = new mongoose.Schema({
     members: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
-    }]
+    }],
+    githubRepo: {
+        type: String,
+        default: null, // e.g., "facebook/react"
+        trim: true
+    },
+    status: {
+        type: String,
+        enum: ['Planning', 'Active', 'Completed', 'Archived'],
+        default: 'Active'
+    }
 }, { timestamps: true });
 
 export default mongoose.model('Project', projectSchema);

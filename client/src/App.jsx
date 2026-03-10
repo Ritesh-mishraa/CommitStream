@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import Room from './pages/Room';
 import ConflictPredictor from './pages/ConflictPredictor';
 import Auth from './pages/Auth';
+import JoinProject from './pages/JoinProject';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
                         {/* Room page handles full screen layout itself */}
                     </Route>
                     <Route path="/room/:id" element={<Room />} />
+                    <Route path="/join/:inviteToken" element={<JoinProject />} />
                 </Route>
             </Routes>
         </BrowserRouter>

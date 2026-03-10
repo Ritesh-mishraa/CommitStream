@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -132,11 +133,54 @@ router.post('/login', async (req, res) => {
                 id: user._id,
                 username: user.username,
                 email: user.email,
-                avatarColor: user.avatarColor
+                avatarColor: user.avatarColor,
+                githubUsername: user.githubUsername,
+                hasGithubPat: !!user.githubPat
             }
         });
     } catch (error) {
         console.error('Login Error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/auth/github-settings:
+ *   post:
+ *     summary: Update GitHub configuration
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Settings updated
+ */
+router.post('/github-settings', authMiddleware, async (req, res) => {
+    try {
+        const { githubPat, githubUsername } = req.body;
+        const user = await User.findById(req.user._id);
+
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        if (githubPat !== undefined) user.githubPat = githubPat;
+        if (githubUsername !== undefined) user.githubUsername = githubUsername;
+
+        await user.save();
+
+        res.json({
+            message: 'GitHub settings updated successfully',
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                avatarColor: user.avatarColor,
+                githubUsername: user.githubUsername,
+                hasGithubPat: !!user.githubPat
+            }
+        });
+    } catch (error) {
+        console.error('GitHub Settings Error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -171,7 +215,11 @@ router.get('/me', async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        res.json(user);
+        const userObj = user.toObject();
+        userObj.hasGithubPat = !!user.githubPat;
+        delete userObj.githubPat; // Never send PAT to client if not needed
+
+        res.json(userObj);
     } catch (error) {
         res.status(401).json({ error: 'Invalid token' });
     }
