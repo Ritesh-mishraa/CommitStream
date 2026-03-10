@@ -14,7 +14,7 @@ const Auth = () => {
     const { login, register, user, isLoading } = useAuth();
     const navigate = useNavigate();
 
-    if (isLoading) return <div className="min-h-screen bg-zinc-950 flex items-center justify-center"><Loader2 className="animate-spin text-indigo-500 w-8 h-8" /></div>;
+    if (isLoading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><Loader2 className="animate-spin text-blue-500 w-8 h-8" /></div>;
     if (user) return <Navigate to="/dashboard" replace />;
 
     const handleSubmit = async (e) => {
@@ -37,14 +37,14 @@ const Auth = () => {
     };
 
     return (
-        <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-xl p-8 shadow-2xl">
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+            <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-xl p-8 shadow-2xl">
                 <div className="flex flex-col items-center mb-8">
-                    <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center border border-indigo-500/20 mb-4">
-                        <GitMerge className="w-6 h-6 text-indigo-400" />
+                    <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20 mb-4">
+                        <GitMerge className="w-6 h-6 text-blue-400" />
                     </div>
-                    <h1 className="text-2xl font-bold text-zinc-100 tracking-tight">CommitStream</h1>
-                    <p className="text-sm text-zinc-500 mt-1">Smart Merge & Collaboration Hub</p>
+                    <h1 className="text-2xl font-bold text-slate-100 tracking-tight">CommitStream</h1>
+                    <p className="text-sm text-slate-500 mt-1">Smart Merge & Collaboration Hub</p>
                 </div>
 
                 {error && (
@@ -56,38 +56,38 @@ const Auth = () => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {!isLogin && (
                         <div>
-                            <label className="block text-xs font-medium text-zinc-400 mb-1">Username</label>
+                            <label className="block text-xs font-medium text-slate-400 mb-1">Username</label>
                             <input
                                 type="text"
                                 required
                                 value={username}
                                 onChange={e => setUsername(e.target.value)}
-                                className="w-full bg-zinc-950 border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                                className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                                 placeholder="developer"
                             />
                         </div>
                     )}
 
                     <div>
-                        <label className="block text-xs font-medium text-zinc-400 mb-1">Email</label>
+                        <label className="block text-xs font-medium text-slate-400 mb-1">Email</label>
                         <input
                             type="email"
                             required
                             value={email}
                             onChange={e => setEmail(e.target.value)}
-                            className="w-full bg-zinc-950 border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                            className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                             placeholder="dev@example.com"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-medium text-zinc-400 mb-1">Password</label>
+                        <label className="block text-xs font-medium text-slate-400 mb-1">Password</label>
                         <input
                             type="password"
                             required
                             value={password}
                             onChange={e => setPassword(e.target.value)}
-                            className="w-full bg-zinc-950 border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                            className="w-full bg-slate-950 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                             placeholder="••••••••"
                         />
                     </div>
@@ -95,7 +95,7 @@ const Auth = () => {
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2 rounded-md text-sm transition-colors mt-2 disabled:opacity-50 flex justify-center items-center h-10"
+                        className="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium py-2 rounded-md text-sm transition-colors mt-2 disabled:opacity-50 flex justify-center items-center h-10"
                     >
                         {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : (isLogin ? 'Sign In' : 'Create Account')}
                     </button>
@@ -105,7 +105,7 @@ const Auth = () => {
                     <button
                         type="button"
                         onClick={() => { setIsLogin(!isLogin); setError(''); }}
-                        className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
+                        className="text-sm text-slate-500 hover:text-slate-300 transition-colors"
                     >
                         {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
                     </button>

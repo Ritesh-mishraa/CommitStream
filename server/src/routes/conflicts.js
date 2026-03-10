@@ -1,6 +1,10 @@
 import express from 'express';
-import Branch from '../models/Branch.js';
+import Project from '../models/Project.js';
+import User from '../models/User.js';
 import ConflictReport from '../models/ConflictReport.js';
+import { compareBranches, filterExactConflicts } from '../utils/githubService.js';
+import { authMiddleware } from '../middleware/auth.js';
+import { resolveConflictWithAI } from '../utils/aiService.js';
 
 const router = express.Router();
 
@@ -24,19 +28,47 @@ const router = express.Router();
  *       200:
  *         description: Conflict prediction report
  */
-router.post('/predict', async (req, res) => {
+router.post('/predict', authMiddleware, async (req, res) => {
     try {
-        const { branchIdA, branchIdB } = req.body;
+        const { branchIdA, branchIdB, projectId } = req.body;
 
-        const branchA = await Branch.findById(branchIdA);
-        const branchB = await Branch.findById(branchIdB);
-
-        if (!branchA || !branchB) {
-            return res.status(404).json({ message: 'One or both branches not found' });
+        if (!projectId) {
+            return res.status(400).json({ message: 'Project ID is required' });
         }
 
-        // Intersection of files changed
-        const conflictingFiles = branchA.filesChanged.filter(file => branchB.filesChanged.includes(file));
+        const project = await Project.findById(projectId);
+        if (!project || !project.githubRepo) {
+            return res.status(404).json({ message: 'Project or GitHub repository not found' });
+        }
+
+        const user = await User.findById(req.user._id);
+        const pat = user?.githubPat || null;
+
+        let compareHead, compareBase;
+        try {
+            [compareHead, compareBase] = await Promise.all([
+                compareBranches(project.githubRepo, branchIdA, branchIdB, pat),
+                compareBranches(project.githubRepo, branchIdB, branchIdA, pat)
+            ]);
+        } catch (compareError) {
+            console.error("GitHub compare failed:", compareError.message);
+            if (compareError.response && compareError.response.status === 404) {
+                return res.status(400).json({
+                    message: "Cannot compare these branches. They may not share a common history or one of them might not exist."
+                });
+            }
+            throw compareError;
+        }
+
+        const filesHead = compareHead.files ? compareHead.files.map(f => f.filename) : [];
+        const filesBase = compareBase.files ? compareBase.files.map(f => f.filename) : [];
+
+        // 1. Files modified in BOTH branches since they diverged
+        const intersectionFiles = filesHead.filter(file => filesBase.includes(file));
+
+        // 2. Filter down to files that ACTUALLY have different content at the tips right now
+        // (if they hit our dual-commit resolution, they will have identical SHAs and be filtered out!)
+        const conflictingFiles = await filterExactConflicts(project.githubRepo, branchIdA, branchIdB, intersectionFiles, pat);
 
         let severity = 'LOW';
         let autoResolved = [];
@@ -100,6 +132,71 @@ router.post('/resolve', async (req, res) => {
             report
         });
     } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/conflicts/resolve-file:
+ *   post:
+ *     summary: Request AI resolution for a specific conflicting file
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               projectId:
+ *                 type: string
+ *               branchIdA:
+ *                 type: string
+ *               branchIdB:
+ *                 type: string
+ *               filename:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: AI-resolved code content
+ */
+router.post('/resolve-file', authMiddleware, async (req, res) => {
+    try {
+        const { projectId, branchIdA, branchIdB, filename } = req.body;
+
+        if (!projectId || !filename) {
+            return res.status(400).json({ message: 'Missing required parameters' });
+        }
+
+        const project = await Project.findById(projectId);
+        if (!project || !project.githubRepo) {
+            return res.status(404).json({ message: 'Project or GitHub repository not found' });
+        }
+
+        const user = await User.findById(req.user._id);
+        const pat = user?.githubPat || null;
+
+        // Fetch the raw diff from GitHub API
+        const compareData = await compareBranches(project.githubRepo, branchIdA, branchIdB, pat);
+
+        // Find the specific file patch
+        const fileDiff = compareData.files?.find(f => f.filename === filename);
+        if (!fileDiff || !fileDiff.patch) {
+            return res.status(404).json({ message: 'File diff not found in the comparison' });
+        }
+
+        // Call the Gemini service
+        const resolvedCode = await resolveConflictWithAI(filename, fileDiff.patch);
+
+        res.json({
+            filename,
+            resolvedCode
+        });
+
+    } catch (error) {
+        console.error('Error resolving file via AI:', error);
         res.status(500).json({ message: error.message });
     }
 });

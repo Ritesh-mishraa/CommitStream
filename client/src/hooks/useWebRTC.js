@@ -9,13 +9,16 @@ const ICE_SERVERS = {
 
 export const useWebRTC = (socket, roomId) => {
     const [localStream, setLocalStream] = useState(null);
-    const [remoteStreams, setRemoteStreams] = useState({}); // { socketId: MediaStream }
+    const [localScreenStream, setLocalScreenStream] = useState(null);
+    const [remoteStreams, setRemoteStreams] = useState({}); // { socketId: [MediaStream] }
 
     const peerConnections = useRef({}); // { socketId: RTCPeerConnection }
     const localStreamRef = useRef(null);
+    const localScreenStreamRef = useRef(null);
 
     const [isMuted, setIsMuted] = useState(true);
     const [isVideoOff, setIsVideoOff] = useState(false);
+    const [isScreenSharing, setIsScreenSharing] = useState(false);
 
     // 1. Initialize local media
     useEffect(() => {
@@ -53,6 +56,19 @@ export const useWebRTC = (socket, roomId) => {
             });
         }
 
+        // Handle renegotiation 
+        pc.onnegotiationneeded = async () => {
+            try {
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                if (socket) {
+                    socket.emit('webrtc:offer', { to: remoteSocketId, offer });
+                }
+            } catch (err) {
+                console.error('Error during renegotiation:', err);
+            }
+        };
+
         // Handle incoming ICE candidates
         pc.onicecandidate = (event) => {
             if (event.candidate && socket) {
@@ -62,10 +78,17 @@ export const useWebRTC = (socket, roomId) => {
 
         // Handle incoming media streams
         pc.ontrack = (event) => {
-            setRemoteStreams(prev => ({
-                ...prev,
-                [remoteSocketId]: event.streams[0]
-            }));
+            const stream = event.streams[0];
+            setRemoteStreams(prev => {
+                const existingStreams = prev[remoteSocketId] || [];
+                if (!existingStreams.some(s => s.id === stream.id)) {
+                    return {
+                        ...prev,
+                        [remoteSocketId]: [...existingStreams, stream]
+                    };
+                }
+                return prev;
+            });
         };
 
         peerConnections.current[remoteSocketId] = pc;
@@ -77,17 +100,26 @@ export const useWebRTC = (socket, roomId) => {
         // DO NOT attach signaling listeners until local stream is fully acquired
         if (!socket || !localStream) return;
 
-        // When someone joins, we (the existing users) initiate the offer
+        // When someone joins, create connection
         const handleUserJoined = async ({ socketId, username }) => {
-            const pc = createPeerConnection(socketId);
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            socket.emit('webrtc:offer', { to: socketId, offer });
+            createPeerConnection(socketId);
+            // We rely on onnegotiationneeded to fire the offer
         };
 
         const handleOfferReceived = async ({ from, offer }) => {
-            const pc = createPeerConnection(from);
-            await pc.setRemoteDescription(new RTCSessionDescription(offer));
+            let pc = peerConnections.current[from];
+            if (!pc) pc = createPeerConnection(from);
+
+            // Check signaling state to avoid collision
+            if (pc.signalingState !== 'stable') {
+                await Promise.all([
+                    pc.setLocalDescription({ type: "rollback" }),
+                    pc.setRemoteDescription(new RTCSessionDescription(offer))
+                ]);
+            } else {
+                await pc.setRemoteDescription(new RTCSessionDescription(offer));
+            }
+
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
             socket.emit('webrtc:answer', { to: from, answer });
@@ -96,15 +128,36 @@ export const useWebRTC = (socket, roomId) => {
         const handleAnswerReceived = async ({ from, answer }) => {
             const pc = peerConnections.current[from];
             if (pc) {
-                await pc.setRemoteDescription(new RTCSessionDescription(answer));
+                // If the remote description was already set (e.g., from rollback), we might not need this.
+                // But generally safe to attempt.
+                try {
+                    await pc.setRemoteDescription(new RTCSessionDescription(answer));
+                } catch (e) {
+                    console.log('Answer ignored, potentially already in stable state', e);
+                }
             }
         };
 
         const handleIceReceived = async ({ from, candidate }) => {
             const pc = peerConnections.current[from];
             if (pc) {
-                await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                try {
+                    await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                } catch (e) {
+                    console.log('Failed to add ICE candidate', e);
+                }
             }
+        };
+
+        const handleScreenShareId = ({ from, streamId }) => {
+            setRemoteStreams(prev => {
+                const existingStreams = prev[from] || [];
+                const updatedStreams = existingStreams.map(s => {
+                    if (s.id === streamId) s.isScreen = true;
+                    return s;
+                });
+                return { ...prev, [from]: updatedStreams };
+            });
         };
 
         const handleUserLeft = ({ socketId }) => {
@@ -123,6 +176,7 @@ export const useWebRTC = (socket, roomId) => {
         socket.on('webrtc:offer-received', handleOfferReceived);
         socket.on('webrtc:answer-received', handleAnswerReceived);
         socket.on('webrtc:ice-received', handleIceReceived);
+        socket.on('webrtc:screen-share-id', handleScreenShareId);
         socket.on('user-left', handleUserLeft);
 
         // Tell the server we are NOW ready to receive 'user-joined' events
@@ -133,6 +187,7 @@ export const useWebRTC = (socket, roomId) => {
             socket.off('webrtc:offer-received', handleOfferReceived);
             socket.off('webrtc:answer-received', handleAnswerReceived);
             socket.off('webrtc:ice-received', handleIceReceived);
+            socket.off('webrtc:screen-share-id', handleScreenShareId);
             socket.off('user-left', handleUserLeft);
         };
 
@@ -159,6 +214,47 @@ export const useWebRTC = (socket, roomId) => {
         }
     };
 
+    const startScreenShare = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            setLocalScreenStream(stream);
+            localScreenStreamRef.current = stream;
+            setIsScreenSharing(true);
+
+            // Add the new screen track to all existing peers
+            const screenTrack = stream.getVideoTracks()[0];
+            Object.values(peerConnections.current).forEach(pc => {
+                pc.addTrack(screenTrack, stream);
+            });
+
+            // Notify when the user stops screen sharing via browser button
+            screenTrack.onended = () => stopScreenShare();
+
+            // Broadast custom event to tell receivers which stream is the screen
+            socket.emit('webrtc:screen-share-id', { streamId: stream.id });
+
+        } catch (err) {
+            console.error('Failed to get display media', err);
+        }
+    };
+
+    const stopScreenShare = () => {
+        if (localScreenStreamRef.current) {
+            const track = localScreenStreamRef.current.getTracks()[0];
+            track.stop();
+
+            // Remove the track from all peers
+            Object.values(peerConnections.current).forEach(pc => {
+                const sender = pc.getSenders().find(s => s.track === track);
+                if (sender) pc.removeTrack(sender);
+            });
+
+            setLocalScreenStream(null);
+            localScreenStreamRef.current = null;
+            setIsScreenSharing(false);
+        }
+    };
+
     const disconnect = useCallback(() => {
         if (localStreamRef.current) {
             localStreamRef.current.getTracks().forEach(track => track.stop());
@@ -173,11 +269,15 @@ export const useWebRTC = (socket, roomId) => {
 
     return {
         localStream,
+        localScreenStream,
         remoteStreams,
         toggleMute,
         toggleVideo,
+        startScreenShare,
+        stopScreenShare,
         disconnect,
         isMuted,
-        isVideoOff
+        isVideoOff,
+        isScreenSharing
     };
 };
