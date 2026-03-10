@@ -1,1 +1,1 @@
-This is the content from TEST-BRANCH-A. It is totally different!
+This is the content from TEST-BRANCH-B. Very conflicting indeed.
