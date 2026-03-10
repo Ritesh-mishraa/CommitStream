@@ -10,7 +10,9 @@
     "seed": "node src/seed.js"
   },
   "dependencies": {
+    "@google/genai": "^1.44.0",
     "@prisma/client": "^5.10.2",
+    "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

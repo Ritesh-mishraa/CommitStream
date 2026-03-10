@@ -79,4 +79,64 @@ router.post('/', authMiddleware, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/tasks/{id}/status:
+ *   patch:
+ *     summary: Update task status
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [TODO, IN_PROGRESS, DONE]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Task status updated
+ */
+router.patch('/:id/status', authMiddleware, async (req, res) => {
+    try {
+        const { status } = req.body;
+        const validStatuses = ['TODO', 'IN_PROGRESS', 'DONE'];
+
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ message: 'Invalid status' });
+        }
+
+        let task = await Task.findById(req.params.id).populate('project');
+        if (!task) {
+            return res.status(404).json({ message: 'Task not found' });
+        }
+
+        // Check if user is either the project owner or the task assignee
+        const isOwner = req.user._id.toString() === task.project.owner.toString();
+        const isAssignee = req.user.username === task.assignee;
+
+        if (!isOwner && !isAssignee) {
+            return res.status(403).json({ message: 'Only the project owner or assigned user can update this task' });
+        }
+
+        task.status = status;
+        await task.save();
+
+        res.json(task);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 export default router;

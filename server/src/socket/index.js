@@ -91,6 +91,15 @@ export const handleSocketConnection = (socket) => {
         });
     });
 
+    socket.on('webrtc:screen-share-id', ({ streamId }) => {
+        if (socket.roomId) {
+            socket.to(socket.roomId).emit('webrtc:screen-share-id', {
+                from: socket.id,
+                streamId
+            });
+        }
+    });
+
     socket.on('disconnect', () => {
         console.log(`User disconnected: ${socket.id}`);
         if (socket.roomId) {

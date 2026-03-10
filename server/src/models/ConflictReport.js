@@ -2,13 +2,11 @@ import mongoose from 'mongoose';
 
 const conflictReportSchema = new mongoose.Schema({
     branchA: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Branch',
+        type: String,
         required: true
     },
     branchB: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Branch',
+        type: String,
         required: true
     },
     conflictingFiles: [{
