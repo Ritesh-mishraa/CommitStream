@@ -2,7 +2,7 @@ import express from 'express';
 import Project from '../models/Project.js';
 import User from '../models/User.js';
 import ConflictReport from '../models/ConflictReport.js';
-import { compareBranches, filterExactConflicts } from '../utils/githubService.js';
+import { compareBranches, filterExactConflicts, fetchFileContent } from '../utils/githubService.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { resolveConflictWithAI } from '../utils/aiService.js';
 
@@ -197,6 +197,65 @@ router.post('/resolve-file', authMiddleware, async (req, res) => {
 
     } catch (error) {
         console.error('Error resolving file via AI:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/conflicts/file-content:
+ *   post:
+ *     summary: Get raw file content from two branches for manual resolution
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               projectId:
+ *                 type: string
+ *               branchIdA:
+ *                 type: string
+ *               branchIdB:
+ *                 type: string
+ *               filename:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Extracted raw file contents
+ */
+router.post('/file-content', authMiddleware, async (req, res) => {
+    try {
+        const { projectId, branchIdA, branchIdB, filename } = req.body;
+
+        if (!projectId || !filename || !branchIdA || !branchIdB) {
+            return res.status(400).json({ message: 'Missing required parameters' });
+        }
+
+        const project = await Project.findById(projectId);
+        if (!project || !project.githubRepo) {
+            return res.status(404).json({ message: 'Project or GitHub repository not found' });
+        }
+
+        const user = await User.findById(req.user._id);
+        const pat = user?.githubPat || null;
+
+        // Fetch contents in parallel
+        const [contentA, contentB] = await Promise.all([
+            fetchFileContent(project.githubRepo, branchIdA, filename, pat),
+            fetchFileContent(project.githubRepo, branchIdB, filename, pat)
+        ]);
+
+        res.json({
+            contentA: contentA || '',
+            contentB: contentB || ''
+        });
+
+    } catch (error) {
+        console.error('Error fetching file content:', error);
         res.status(500).json({ message: error.message });
     }
 });

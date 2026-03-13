@@ -5,6 +5,7 @@ const GITHUB_API_URL = 'https://api.github.com';
 /**
  * Creates an Axios instance pre-configured for GitHub API access.
  * If a PAT is provided, it attaches it to the Authorization header.
+ * Includes automatic retries for resilient network requests.
  */
 export const getGithubClient = (pat = null) => {
     const headers = {
@@ -16,10 +17,36 @@ export const getGithubClient = (pat = null) => {
         headers['Authorization'] = `token ${pat}`;
     }
 
-    return axios.create({
+    const client = axios.create({
         baseURL: GITHUB_API_URL,
         headers
     });
+
+    // Add a response interceptor for automatic retries
+    client.interceptors.response.use(undefined, async (err) => {
+        const config = err.config;
+        if (!config || !config._retryCount) {
+            config._retryCount = 0;
+        }
+
+        // Retry on network errors (like ECONNRESET) or 5xx server errors
+        const shouldRetry = !err.response || (err.response.status >= 500 && err.response.status < 600) || err.code === 'ECONNRESET';
+
+        if (shouldRetry && config._retryCount < 3) {
+            config._retryCount += 1;
+            console.log(`[GitHub API] Network issue (${err.message}). Retrying request... (${config._retryCount}/3)`);
+
+            // Wait with exponential backoff before retrying
+            const delay = Math.pow(2, config._retryCount) * 500;
+            await new Promise(resolve => setTimeout(resolve, delay));
+
+            return client(config);
+        }
+
+        return Promise.reject(err);
+    });
+
+    return client;
 };
 
 /**
@@ -34,6 +61,22 @@ export const fetchRepoBranches = async (repo, pat = null) => {
         return res.data;
     } catch (error) {
         console.error(`Failed to fetch branches from ${repo}:`, error.message);
+        throw error;
+    }
+};
+
+/**
+ * Fetch repository details (to get default branch)
+ * @param {string} repo - Format "owner/repo"
+ * @param {string} pat - Optional Personal Access Token
+ */
+export const fetchRepoDetails = async (repo, pat = null) => {
+    try {
+        const client = getGithubClient(pat);
+        const res = await client.get(`/repos/${repo}`);
+        return res.data;
+    } catch (error) {
+        console.error(`Failed to fetch repo details for ${repo}:`, error.message);
         throw error;
     }
 };
@@ -189,6 +232,49 @@ export const updateRepoFile = async (repo, branch, path, content, message, pat) 
         return res.data;
     } catch (error) {
         console.error(`Failed to commit file to ${repo}:`, error.response?.data || error.message);
+        throw error;
+    }
+};
+
+/**
+ * Fetch the raw content of a specific file in a branch
+ */
+export const fetchFileContent = async (repo, branch, path, pat = null) => {
+    try {
+        const client = getGithubClient(pat);
+        const { data } = await client.get(`/repos/${repo}/contents/${path}?ref=${branch}`);
+        // data.content is base64 encoded
+        return Buffer.from(data.content, 'base64').toString('utf8');
+    } catch (err) {
+        if (err.response?.status === 404) return null; // File doesn't exist
+        throw err;
+    }
+};
+
+/**
+ * Fetch commits for a specific branch
+ */
+export const fetchBranchCommits = async (repo, branch, pat = null) => {
+    try {
+        const client = getGithubClient(pat);
+        const { data } = await client.get(`/repos/${repo}/commits?sha=${encodeURIComponent(branch)}&per_page=20`);
+        return data;
+    } catch (error) {
+        console.error(`Failed to fetch commits for branch ${branch} in ${repo}:`, error.message);
+        throw error;
+    }
+};
+
+/**
+ * Fetch specific commit details (including file modifications)
+ */
+export const fetchCommitDetails = async (repo, commitSha, pat = null) => {
+    try {
+        const client = getGithubClient(pat);
+        const { data } = await client.get(`/repos/${repo}/commits/${commitSha}`);
+        return data;
+    } catch (error) {
+        console.error(`Failed to fetch commit details for ${commitSha} in ${repo}:`, error.message);
         throw error;
     }
 };

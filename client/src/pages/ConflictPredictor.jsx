@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
-import { GitBranch, GitMerge, FileCode2, Package, Check, AlertTriangle, ShieldAlert, Cpu, Folder, X } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { GitBranch, GitMerge, FileCode2, Package, Check, AlertTriangle, ShieldAlert, Cpu, Folder, X, History, Edit2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import ProjectSelector from '../components/dashboard/ProjectSelector';
-import Editor from '@monaco-editor/react';
+import Editor, { DiffEditor } from '@monaco-editor/react';
+import BranchDetailsModal from '../components/dashboard/BranchDetailsModal';
 
 const API_BASE = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000/api';
 
@@ -15,9 +16,14 @@ const ConflictPredictor = () => {
     const [report, setReport] = useState(null);
 
     const [resolvingFile, setResolvingFile] = useState(null);
+    const [resolutionMode, setResolutionMode] = useState(null);
     const [resolvedCode, setResolvedCode] = useState('');
+    const [originalCode, setOriginalCode] = useState('');
+    const [incomingCode, setIncomingCode] = useState('');
     const [isResolving, setIsResolving] = useState(false);
     const [isCommitting, setIsCommitting] = useState(false);
+    const [historyBranch, setHistoryBranch] = useState(null);
+    const manualEditorRef = useRef(null);
 
     // Fetch branches scoped to the active project
     useEffect(() => {
@@ -78,8 +84,46 @@ const ConflictPredictor = () => {
         }
     };
 
+    const handleManualResolve = async (filename) => {
+        setResolvingFile(filename);
+        setResolutionMode('MANUAL');
+        setIsResolving(true);
+        setOriginalCode('// Fetching contents...');
+        setResolvedCode('// Fetching contents...');
+        try {
+            const res = await fetch(`${API_BASE}/conflicts/file-content`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    projectId: activeProject._id,
+                    branchIdA: selectedBranches[0],
+                    branchIdB: selectedBranches[1],
+                    filename
+                })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setOriginalCode(data.contentA);
+                setResolvedCode(data.contentB);
+                setIncomingCode(data.contentB);
+            } else {
+                setOriginalCode(`// Failed to fetch content.\n// ${data.message || 'Unknown error'}`);
+                setResolvedCode('');
+            }
+        } catch (err) {
+            console.error(err);
+            setOriginalCode('// Error occurred.');
+        } finally {
+            setIsResolving(false);
+        }
+    };
+
     const handleResolveWithAI = async (filename) => {
         setResolvingFile(filename);
+        setResolutionMode('AI');
         setIsResolving(true);
         setResolvedCode('// Requesting AI resolution from Gemini...');
         try {
@@ -114,12 +158,17 @@ const ConflictPredictor = () => {
         if (!resolvingFile || !resolvedCode) return;
         setIsCommitting(true);
         try {
-            const commitPayload = (branchId) => ({
-                branch: branchId,
-                path: resolvingFile,
-                content: resolvedCode,
-                message: `Auto-merge and AI resolution for ${resolvingFile}`
-            });
+            const commitPayload = (branchId) => {
+                const finalContent = resolutionMode === 'MANUAL' && manualEditorRef.current
+                    ? manualEditorRef.current.getValue()
+                    : resolvedCode;
+                return {
+                    branch: branchId,
+                    path: resolvingFile,
+                    content: finalContent,
+                    message: `Merge resolution for ${resolvingFile}`
+                };
+            };
 
             // Commit to both branches to truly resolve the divergent history
             const [resA, resB] = await Promise.all([
@@ -221,7 +270,12 @@ const ConflictPredictor = () => {
                                                         {branch.name}
                                                     </span>
                                                 </div>
-                                                {isSelected && <Check className="w-4 h-4 text-blue-500" />}
+                                                <div className="flex items-center gap-3">
+                                                    <button onClick={(e) => { e.stopPropagation(); setHistoryBranch(branch.name); }} className="text-xs text-slate-400 hover:text-blue-400 flex items-center gap-1 transition-colors">
+                                                        <History className="w-3 h-3" /> History
+                                                    </button>
+                                                    {isSelected && <Check className="w-4 h-4 text-blue-500" />}
+                                                </div>
                                             </div>
 
                                             <div className="mt-3">
@@ -255,34 +309,61 @@ const ConflictPredictor = () => {
                     </div>
 
                     {/* Right: Results Dashboard */}
-                    <div className="bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-lg p-5 flex flex-col h-[600px] overflow-hidden">
-                        <h3 className="text-sm font-medium text-slate-300 mb-4 border-b border-slate-800 pb-3">Prediction Report</h3>
+                    <div className="bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-lg p-5 flex flex-col h-[600px]">
+                        <h3 className="text-sm font-medium text-slate-300 mb-4 border-b border-slate-800 pb-3 flex-shrink-0">Prediction Report</h3>
 
                         {resolvingFile ? (
                             <div className="flex-1 flex flex-col min-h-0 bg-[#1e1e1e] rounded border border-slate-700 overflow-hidden animate-in fade-in duration-300">
-                                <div className="bg-slate-800 px-3 py-2 flex justify-between items-center text-xs text-slate-300 font-mono">
-                                    <span className="truncate flex-1 font-semibold">{resolvingFile} <span className="text-blue-400 font-normal ml-2">(AI Merge)</span></span>
+                                <div className="bg-slate-800 px-3 py-2 flex justify-between items-center text-xs text-slate-300 font-mono z-20 flex-shrink-0">
+                                    <span className="truncate flex-1 font-semibold">{resolvingFile} <span className="text-blue-400 font-normal ml-2">({resolutionMode === 'AI' ? 'AI Merge' : 'Manual Merge'})</span></span>
+                                    {resolutionMode === 'MANUAL' && (
+                                        <span className="hidden md:inline text-slate-400 mx-4">Original (Base) vs Modified (Comparison)</span>
+                                    )}
                                     <button onClick={() => setResolvingFile(null)} className="hover:text-white px-2 py-1 bg-slate-700/50 rounded flex gap-1 items-center">
                                         <X className="w-3 h-3" /> Close
                                     </button>
                                 </div>
-                                <div className="flex-1 relative">
+                                <div className="flex-1 min-h-0 relative border-y border-slate-700">
                                     {isResolving && (
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/80 z-10 backdrop-blur-sm">
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/80 z-30 backdrop-blur-sm">
                                             <Cpu className="w-8 h-8 text-blue-500 animate-pulse mb-3" />
-                                            <p className="text-sm font-medium text-blue-400">Gemini resolving conflicts...</p>
+                                            <p className="text-sm font-medium text-blue-400">{resolutionMode === 'AI' ? 'Gemini resolving conflicts...' : 'Fetching diffs...'}</p>
                                         </div>
                                     )}
-                                    <Editor
-                                        height="100%"
-                                        language="javascript"
-                                        theme="vs-dark"
-                                        value={resolvedCode}
-                                        onChange={setResolvedCode}
-                                        options={{ minimap: { enabled: false }, fontSize: 13 }}
-                                    />
+                                    {resolutionMode === 'MANUAL' ? (
+                                        <DiffEditor
+                                            height="100%"
+                                            language="javascript"
+                                            theme="vs-dark"
+                                            original={originalCode}
+                                            modified={resolvedCode}
+                                            onMount={(editor) => {
+                                                manualEditorRef.current = editor.getModifiedEditor();
+                                            }}
+                                            options={{ minimap: { enabled: false }, fontSize: 13, renderSideBySide: true, originalEditable: false, scrollBeyondLastLine: false, wordWrap: 'on' }}
+                                        />
+                                    ) : (
+                                        <Editor
+                                            height="100%"
+                                            language="javascript"
+                                            theme="vs-dark"
+                                            value={resolvedCode}
+                                            onChange={setResolvedCode}
+                                            options={{ minimap: { enabled: false }, fontSize: 13, scrollBeyondLastLine: false, wordWrap: 'on' }}
+                                        />
+                                    )}
                                 </div>
-                                <div className="p-3 bg-slate-800 border-t border-slate-700 flex justify-end gap-3">
+                                <div className="p-3 bg-slate-800 border-t border-slate-700 flex justify-between items-center gap-3 flex-shrink-0">
+                                    {resolutionMode === 'MANUAL' ? (
+                                        <div className="flex gap-2">
+                                            <button onClick={() => { if (manualEditorRef.current) manualEditorRef.current.setValue(originalCode); }} className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded transition-colors" title="Accept Base branch changes">
+                                                Accept Base
+                                            </button>
+                                            <button onClick={() => { if (manualEditorRef.current) manualEditorRef.current.setValue(incomingCode); }} className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded transition-colors" title="Accept Incoming branch changes">
+                                                Accept Incoming
+                                            </button>
+                                        </div>
+                                    ) : <div></div>}
                                     <button onClick={handleCommitResolution} disabled={isCommitting} className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                                         {isCommitting ? <Cpu className="w-4 h-4 animate-spin" /> : <GitMerge className="w-4 h-4" />}
                                         {isCommitting ? 'Committing...' : 'Commit & Push Resolution'}
@@ -323,17 +404,24 @@ const ConflictPredictor = () => {
                                                     <div className="mt-0.5">
                                                         {isLock ? <Package className="w-4 h-4 text-amber-500" /> : <FileCode2 className="w-4 h-4 text-blue-400" />}
                                                     </div>
-                                                    <div className="flex-1">
-                                                        <div className="flex justify-between items-start">
-                                                            <code className="text-slate-300 bg-slate-950 px-1 rounded block w-fit mb-1">{file}</code>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 w-full">
+                                                            <div className="flex-1 w-full min-w-0">
+                                                                <code className="text-slate-300 bg-slate-950 px-2 py-1 rounded block mb-1 truncate text-xs" title={file}>{file}</code>
+                                                            </div>
                                                             {!isLock && (
-                                                                <button onClick={() => handleResolveWithAI(file)} className="text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-1 rounded flex items-center gap-1 transition-colors">
-                                                                    <Cpu className="w-3 h-3" /> Resolve AI
-                                                                </button>
+                                                                <div className="flex shrink-0 gap-2 w-full xl:w-auto mt-1 xl:mt-0">
+                                                                    <button onClick={() => handleManualResolve(file)} className="flex-1 xl:flex-none justify-center text-[11px] sm:text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap">
+                                                                        <Edit2 className="w-3 h-3" /> Manual edit
+                                                                    </button>
+                                                                    <button onClick={() => handleResolveWithAI(file)} className="flex-1 xl:flex-none justify-center text-[11px] sm:text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap">
+                                                                        <Cpu className="w-3 h-3" /> Resolve AI
+                                                                    </button>
+                                                                </div>
                                                             )}
                                                         </div>
-                                                        {isLock && <p className="text-xs text-slate-500">Lockfile conflict via dependency divergence.</p>}
-                                                        {!isLock && <p className="text-xs text-slate-500">Deep file collision detected.</p>}
+                                                        {isLock && <p className="text-xs text-slate-500 mt-2">Lockfile conflict via dependency divergence.</p>}
+                                                        {!isLock && <p className="text-xs text-slate-500 mt-2">Deep file collision detected.</p>}
                                                     </div>
                                                 </div>
                                             );
@@ -373,6 +461,12 @@ const ConflictPredictor = () => {
                     <p>Select a project to view its branches for conflict prediction.</p>
                 </div>
             )}
+            <BranchDetailsModal
+                isOpen={!!historyBranch}
+                onClose={() => setHistoryBranch(null)}
+                project={activeProject}
+                branchName={historyBranch}
+            />
         </div>
     );
 };
