@@ -42,20 +42,22 @@ const Layout = () => {
 
                 <div className="mt-auto p-4 border-t border-slate-800/50">
                     <div className="flex items-center gap-3">
-                        <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center border border-slate-700 text-white font-medium"
-                            style={{ backgroundColor: user?.avatarColor || '#333' }}
-                        >
-                            <span className="text-xs">{user?.username?.charAt(0).toUpperCase()}</span>
-                        </div>
-                        <div className="flex flex-col flex-1">
-                            <span className="text-sm text-slate-200 font-medium">{user?.username}</span>
-                            <span className="text-[10px] text-slate-500 truncate max-w-[120px]">{user?.email}</span>
-                        </div>
+                        <NavLink to="/profile" className="flex items-center gap-3 flex-1 hover:bg-slate-800/50 p-2 rounded-lg transition-colors cursor-pointer group">
+                            <div
+                                className="w-8 h-8 rounded-full flex items-center justify-center border border-slate-700 text-white font-medium group-hover:border-blue-500 transition-colors"
+                                style={{ backgroundColor: user?.avatarColor || '#333' }}
+                            >
+                                <span className="text-xs">{user?.username?.charAt(0).toUpperCase()}</span>
+                            </div>
+                            <div className="flex flex-col flex-1">
+                                <span className="text-sm text-slate-200 font-medium group-hover:text-blue-400 transition-colors">{user?.username}</span>
+                                <span className="text-[10px] text-slate-500 truncate max-w-[120px]">{user?.email}</span>
+                            </div>
+                        </NavLink>
                         <button
                             onClick={logout}
                             title="Logout"
-                            className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-slate-800/50 rounded transition-colors"
+                            className="p-2 text-slate-500 hover:text-red-400 hover:bg-slate-800/50 rounded-lg transition-colors"
                         >
                             <LogOut className="w-4 h-4" />
                         </button>

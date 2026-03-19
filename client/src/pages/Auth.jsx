@@ -25,10 +25,11 @@ const Auth = () => {
         try {
             if (isLogin) {
                 await login(email, password);
+                navigate('/dashboard');
             } else {
                 await register(username, email, password);
+                navigate('/onboarding');
             }
-            navigate('/dashboard');
         } catch (err) {
             setError(err.message);
         } finally {
