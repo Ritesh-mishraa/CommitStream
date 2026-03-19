@@ -208,7 +208,7 @@ const ConflictPredictor = () => {
             case 'LOCKFILE_CONFLICT': return 'text-amber-400 bg-amber-400/10 border-amber-500/20';
             case 'COMPONENT_CONFLICT': return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
             case 'LOW': return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
-            default: return 'text-slate-400 bg-slate-800 border-slate-700';
+            default: return 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700';
         }
     };
 
@@ -218,7 +218,7 @@ const ConflictPredictor = () => {
             {/* Header Area */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-xl font-semibold text-slate-100 flex items-center gap-2 mb-1">
+                    <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2 mb-1">
                         <GitMerge className="w-5 h-5 text-blue-500" />
                         Smart Merge Assistant
                     </h1>
@@ -235,13 +235,13 @@ const ConflictPredictor = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                     {/* Left: Branch Selection */}
-                    <div className="bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-lg p-5 flex flex-col h-[600px]">
-                        <h3 className="text-sm font-medium text-slate-300 mb-4 flex justify-between items-center">
+                    <div className="bg-white dark:bg-slate-900/60 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-lg p-5 flex flex-col h-[600px]">
+                        <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4 flex justify-between items-center">
                             <span className="flex items-center gap-2">
                                 <Folder className="w-4 h-4 text-slate-500" />
                                 Branches in {activeProject.name}
                             </span>
-                            <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded">
+                            <span className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded">
                                 Selected: {selectedBranches.length}/2
                             </span>
                         </h3>
@@ -260,18 +260,18 @@ const ConflictPredictor = () => {
                                             onClick={() => toggleBranch(branch._id)}
                                             className={`p-4 rounded-md border cursor-pointer transition-all ${isSelected
                                                 ? 'bg-blue-500/10 border-blue-500/50 relative'
-                                                : 'bg-slate-900 border-slate-800 hover:border-slate-700'
+                                                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:border-slate-700'
                                                 }`}
                                         >
                                             <div className="flex justify-between items-start">
                                                 <div className="flex items-center gap-2">
                                                     <GitBranch className={`w-4 h-4 ${isSelected ? 'text-blue-400' : 'text-slate-500'}`} />
-                                                    <span className={`font-mono text-sm ${isSelected ? 'text-blue-300 font-semibold' : 'text-slate-300'}`}>
+                                                    <span className={`font-mono text-sm ${isSelected ? 'text-blue-300 font-semibold' : 'text-slate-700 dark:text-slate-300'}`}>
                                                         {branch.name}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-3">
-                                                    <button onClick={(e) => { e.stopPropagation(); setHistoryBranch(branch.name); }} className="text-xs text-slate-400 hover:text-blue-400 flex items-center gap-1 transition-colors">
+                                                    <button onClick={(e) => { e.stopPropagation(); setHistoryBranch(branch.name); }} className="text-xs text-slate-600 dark:text-slate-400 hover:text-blue-400 flex items-center gap-1 transition-colors">
                                                         <History className="w-3 h-3" /> History
                                                     </button>
                                                     {isSelected && <Check className="w-4 h-4 text-blue-500" />}
@@ -282,7 +282,7 @@ const ConflictPredictor = () => {
                                                 <div className="text-xs text-slate-500 mb-1">Modified Files ({branch.filesChanged.length})</div>
                                                 <div className="flex overflow-x-auto gap-2 pb-2 mt-2" style={{ scrollbarWidth: 'thin' }}>
                                                     {branch.filesChanged.map(file => (
-                                                        <span key={file} className="text-[10px] bg-slate-950/50 block border border-slate-800 text-slate-400 px-2 py-1 rounded-sm font-mono whitespace-nowrap">
+                                                        <span key={file} className="text-[10px] bg-slate-50 dark:bg-slate-950/50 block border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 px-2 py-1 rounded-sm font-mono whitespace-nowrap">
                                                             {file}
                                                         </span>
                                                     ))}
@@ -297,7 +297,7 @@ const ConflictPredictor = () => {
                         <button
                             onClick={runPrediction}
                             disabled={selectedBranches.length !== 2 || isPredicting}
-                            className="w-full mt-4 bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-md font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+                            className="w-full mt-4 bg-blue-600 hover:bg-blue-500 text-slate-900 dark:text-slate-100 py-2 rounded-md font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
                         >
                             {isPredicting ? (
                                 <Cpu className="w-4 h-4 animate-spin" />
@@ -309,23 +309,23 @@ const ConflictPredictor = () => {
                     </div>
 
                     {/* Right: Results Dashboard */}
-                    <div className="bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-lg p-5 flex flex-col h-[600px]">
-                        <h3 className="text-sm font-medium text-slate-300 mb-4 border-b border-slate-800 pb-3 flex-shrink-0">Prediction Report</h3>
+                    <div className="bg-white dark:bg-slate-900/60 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-lg p-5 flex flex-col h-[600px]">
+                        <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4 border-b border-slate-200 dark:border-slate-800 pb-3 flex-shrink-0">Prediction Report</h3>
 
                         {resolvingFile ? (
-                            <div className="flex-1 flex flex-col min-h-0 bg-[#1e1e1e] rounded border border-slate-700 overflow-hidden animate-in fade-in duration-300">
-                                <div className="bg-slate-800 px-3 py-2 flex justify-between items-center text-xs text-slate-300 font-mono z-20 flex-shrink-0">
+                            <div className="flex-1 flex flex-col min-h-0 bg-[#1e1e1e] rounded border border-slate-300 dark:border-slate-700 overflow-hidden animate-in fade-in duration-300">
+                                <div className="bg-slate-100 dark:bg-slate-800 px-3 py-2 flex justify-between items-center text-xs text-slate-700 dark:text-slate-300 font-mono z-20 flex-shrink-0">
                                     <span className="truncate flex-1 font-semibold">{resolvingFile} <span className="text-blue-400 font-normal ml-2">({resolutionMode === 'AI' ? 'AI Merge' : 'Manual Merge'})</span></span>
                                     {resolutionMode === 'MANUAL' && (
-                                        <span className="hidden md:inline text-slate-400 mx-4">Original (Base) vs Modified (Comparison)</span>
+                                        <span className="hidden md:inline text-slate-600 dark:text-slate-400 mx-4">Original (Base) vs Modified (Comparison)</span>
                                     )}
-                                    <button onClick={() => setResolvingFile(null)} className="hover:text-white px-2 py-1 bg-slate-700/50 rounded flex gap-1 items-center">
+                                    <button onClick={() => setResolvingFile(null)} className="hover:text-slate-900 dark:text-slate-100 px-2 py-1 bg-slate-700/50 rounded flex gap-1 items-center">
                                         <X className="w-3 h-3" /> Close
                                     </button>
                                 </div>
-                                <div className="flex-1 min-h-0 relative border-y border-slate-700">
+                                <div className="flex-1 min-h-0 relative border-y border-slate-300 dark:border-slate-700">
                                     {isResolving && (
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/80 z-30 backdrop-blur-sm">
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white dark:bg-slate-900/80 z-30 backdrop-blur-sm">
                                             <Cpu className="w-8 h-8 text-blue-500 animate-pulse mb-3" />
                                             <p className="text-sm font-medium text-blue-400">{resolutionMode === 'AI' ? 'Gemini resolving conflicts...' : 'Fetching diffs...'}</p>
                                         </div>
@@ -353,18 +353,18 @@ const ConflictPredictor = () => {
                                         />
                                     )}
                                 </div>
-                                <div className="p-3 bg-slate-800 border-t border-slate-700 flex justify-between items-center gap-3 flex-shrink-0">
+                                <div className="p-3 bg-slate-100 dark:bg-slate-800 border-t border-slate-300 dark:border-slate-700 flex justify-between items-center gap-3 flex-shrink-0">
                                     {resolutionMode === 'MANUAL' ? (
                                         <div className="flex gap-2">
-                                            <button onClick={() => { if (manualEditorRef.current) manualEditorRef.current.setValue(originalCode); }} className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded transition-colors" title="Accept Base branch changes">
+                                            <button onClick={() => { if (manualEditorRef.current) manualEditorRef.current.setValue(originalCode); }} className="text-xs bg-white dark:bg-slate-900 hover:bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 px-3 py-1.5 rounded transition-colors font-medium" title="Accept Base branch changes">
                                                 Accept Base
                                             </button>
-                                            <button onClick={() => { if (manualEditorRef.current) manualEditorRef.current.setValue(incomingCode); }} className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded transition-colors" title="Accept Incoming branch changes">
+                                            <button onClick={() => { if (manualEditorRef.current) manualEditorRef.current.setValue(incomingCode); }} className="text-xs bg-white dark:bg-slate-900 hover:bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:text-slate-100 border border-slate-300 dark:border-slate-700 px-3 py-1.5 rounded transition-colors font-medium" title="Accept Incoming branch changes">
                                                 Accept Incoming
                                             </button>
                                         </div>
                                     ) : <div></div>}
-                                    <button onClick={handleCommitResolution} disabled={isCommitting} className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <button onClick={handleCommitResolution} disabled={isCommitting} className="bg-blue-600 hover:bg-blue-500 text-slate-900 dark:text-slate-100 px-4 py-1.5 rounded text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                                         {isCommitting ? <Cpu className="w-4 h-4 animate-spin" /> : <GitMerge className="w-4 h-4" />}
                                         {isCommitting ? 'Committing...' : 'Commit & Push Resolution'}
                                     </button>
@@ -400,18 +400,18 @@ const ConflictPredictor = () => {
                                             const isComponent = file.endsWith('.jsx') || file.endsWith('.tsx');
 
                                             return (
-                                                <div key={file} className="p-3 bg-slate-900 border border-slate-800 border-l-2 border-l-red-500 rounded flex gap-3 text-sm">
+                                                <div key={file} className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 border-l-2 border-l-red-500 rounded flex gap-3 text-sm">
                                                     <div className="mt-0.5">
                                                         {isLock ? <Package className="w-4 h-4 text-amber-500" /> : <FileCode2 className="w-4 h-4 text-blue-400" />}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-3 w-full">
                                                             <div className="flex-1 w-full min-w-0">
-                                                                <code className="text-slate-300 bg-slate-950 px-2 py-1 rounded block mb-1 truncate text-xs" title={file}>{file}</code>
+                                                                <code className="text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-950 px-2 py-1 rounded block mb-1 truncate text-xs" title={file}>{file}</code>
                                                             </div>
                                                             {!isLock && (
                                                                 <div className="flex shrink-0 gap-2 w-full xl:w-auto mt-1 xl:mt-0">
-                                                                    <button onClick={() => handleManualResolve(file)} className="flex-1 xl:flex-none justify-center text-[11px] sm:text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap">
+                                                                    <button onClick={() => handleManualResolve(file)} className="flex-1 xl:flex-none justify-center text-[11px] sm:text-xs bg-white dark:bg-slate-900 hover:bg-slate-100 dark:bg-slate-800 hover:text-slate-900 dark:text-slate-100 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap">
                                                                         <Edit2 className="w-3 h-3" /> Manual edit
                                                                     </button>
                                                                     <button onClick={() => handleResolveWithAI(file)} className="flex-1 xl:flex-none justify-center text-[11px] sm:text-xs bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors whitespace-nowrap">
@@ -431,7 +431,7 @@ const ConflictPredictor = () => {
 
                                 {/* Bot Auto Resolutions */}
                                 {report.autoResolved && report.autoResolved.length > 0 && (
-                                    <div className="border-t border-slate-800 pt-4 mt-6">
+                                    <div className="border-t border-slate-200 dark:border-slate-800 pt-4 mt-6">
                                         <div className="text-xs text-blue-400 font-semibold uppercase tracking-wider mb-3 flex items-center gap-1.5">
                                             <Cpu className="w-3.5 h-3.5" /> AI Auto-Resolution Strategy
                                         </div>
@@ -448,7 +448,7 @@ const ConflictPredictor = () => {
 
                             </div>
                         ) : (
-                            <div className="flex-1 flex flex-col items-center justify-center text-slate-600 space-y-4">
+                            <div className="flex-1 flex flex-col items-center justify-center text-slate-600 dark:text-slate-400 space-y-4">
                                 <ShieldAlert className="w-12 h-12 opacity-50" />
                                 <p className="text-sm">Select branches and run prediction engine.</p>
                             </div>
@@ -456,7 +456,7 @@ const ConflictPredictor = () => {
                     </div>
                 </div>
             ) : (
-                <div className="flex flex-col items-center justify-center p-20 text-slate-500 border border-slate-800 border-dashed rounded-lg bg-slate-900/20">
+                <div className="flex flex-col items-center justify-center p-20 text-slate-500 border border-slate-200 dark:border-slate-800 border-dashed rounded-lg bg-white dark:bg-slate-900/20">
                     <Folder className="w-12 h-12 mb-4 opacity-50" />
                     <p>Select a project to view its branches for conflict prediction.</p>
                 </div>

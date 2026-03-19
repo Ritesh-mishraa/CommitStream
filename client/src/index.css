@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-blue-500: #3b82f6;
   --color-blue-600: #2563eb;
@@ -14,6 +16,6 @@
 
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-400 font-sans antialiased m-0 p-0;
+    @apply bg-slate-50 text-slate-600 dark:bg-slate-950 dark:text-slate-400 font-sans antialiased m-0 p-0;
   }
 }

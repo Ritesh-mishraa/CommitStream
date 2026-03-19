@@ -39,7 +39,7 @@ const Home = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-slate-950 flex flex-col font-sans overflow-x-hidden">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans overflow-x-hidden">
             {/* Background elements */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
                 <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-blue-600/10 blur-[120px]" />
@@ -56,7 +56,7 @@ const Home = () => {
                 >
                     <motion.div 
                         variants={fadeIn}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800/50 border border-slate-700/50 text-blue-400 mb-8"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700/50 text-blue-400 mb-8"
                     >
                         <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
                         <span className="text-sm font-medium">CommitStream v1.0 is live</span>
@@ -64,7 +64,7 @@ const Home = () => {
 
                     <motion.h1 
                         variants={fadeIn}
-                        className="text-5xl md:text-7xl font-bold text-white tracking-tight mb-8"
+                        className="text-5xl md:text-7xl font-bold text-slate-900 dark:text-slate-100 tracking-tight mb-8"
                     >
                         Master your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">Git workflow</span><br />
                         without the chaos
@@ -72,7 +72,7 @@ const Home = () => {
 
                     <motion.p 
                         variants={fadeIn}
-                        className="text-lg md:text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed"
+                        className="text-lg md:text-xl text-slate-600 dark:text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed"
                     >
                         The ultimate collaboration hub that predicts, manages, and resolves merge conflicts before they turn into blockers. Built for modern engineering teams.
                     </motion.p>
@@ -83,14 +83,14 @@ const Home = () => {
                     >
                         <button 
                             onClick={() => navigate('/auth')}
-                            className="w-full sm:w-auto px-8 py-4 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-medium transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 group"
+                            className="w-full sm:w-auto px-8 py-4 rounded-full bg-blue-600 hover:bg-blue-500 text-slate-900 dark:text-slate-100 font-medium transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 group"
                         >
                             Start for free
                             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </button>
                         <button 
                             onClick={() => navigate('/about')}
-                            className="w-full sm:w-auto px-8 py-4 rounded-full bg-slate-800 hover:bg-slate-700 text-white font-medium transition-all border border-slate-700"
+                            className="w-full sm:w-auto px-8 py-4 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-700 text-slate-900 dark:text-slate-100 font-medium transition-all border border-slate-300 dark:border-slate-700"
                         >
                             Learn more
                         </button>
@@ -106,12 +106,12 @@ const Home = () => {
                     className="mt-32 max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 w-full"
                 >
                     {features.map((feature, idx) => (
-                        <div key={idx} className="bg-slate-900/50 border border-slate-800 p-8 rounded-2xl hover:border-slate-700 transition-colors group">
-                            <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center mb-6 border border-slate-700 group-hover:bg-slate-800/80 transition-colors">
+                        <div key={idx} className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl hover:border-slate-300 dark:border-slate-700 transition-colors group">
+                            <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-6 border border-slate-300 dark:border-slate-700 group-hover:bg-slate-100 dark:bg-slate-800/80 transition-colors">
                                 {feature.icon}
                             </div>
-                            <h3 className="text-xl font-semibold text-slate-200 mb-3">{feature.title}</h3>
-                            <p className="text-slate-400 leading-relaxed">{feature.description}</p>
+                            <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 mb-3">{feature.title}</h3>
+                            <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{feature.description}</p>
                         </div>
                     ))}
                 </motion.div>

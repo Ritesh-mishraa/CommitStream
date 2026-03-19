@@ -66,9 +66,9 @@ const ActiveTasksBoard = ({ project, tasks = [], setTasks }) => {
     };
 
     return (
-        <div className="bg-slate-900/50 border border-slate-800 rounded-lg overflow-hidden flex flex-col h-[400px]">
-            <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/80 shrink-0">
-                <h3 className="text-sm font-medium text-slate-300">Active Board</h3>
+        <div className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden flex flex-col h-[400px]">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900/80 shrink-0">
+                <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">Active Board</h3>
                 {!isCreating && (
                     <button onClick={() => setIsCreating(true)} className="flex items-center gap-1 text-xs px-2 py-1 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 rounded-md transition-colors">
                         <Plus className="w-3 h-3" /> New Task
@@ -77,7 +77,7 @@ const ActiveTasksBoard = ({ project, tasks = [], setTasks }) => {
             </div>
 
             {isCreating && (
-                <div className="p-3 bg-slate-950/50 border-b border-slate-800 shrink-0">
+                <div className="p-3 bg-slate-50 dark:bg-slate-950/50 border-b border-slate-200 dark:border-slate-800 shrink-0">
                     <form onSubmit={handleCreateTask} className="flex flex-col gap-2">
                         <div className="flex gap-2">
                             <input
@@ -85,14 +85,14 @@ const ActiveTasksBoard = ({ project, tasks = [], setTasks }) => {
                                 placeholder="Task title..."
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
-                                className="flex-1 bg-slate-900 border border-slate-700 text-sm text-slate-200 rounded px-3 py-1.5 focus:outline-none focus:border-blue-500"
+                                className="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 rounded px-3 py-1.5 focus:outline-none focus:border-blue-500"
                                 autoFocus
                                 required
                             />
                             <select
                                 value={assignee}
                                 onChange={(e) => setAssignee(e.target.value)}
-                                className="w-40 bg-slate-900 border border-slate-700 text-sm text-slate-200 rounded px-3 py-1.5 focus:outline-none focus:border-blue-500 appearance-none"
+                                className="w-40 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 rounded px-3 py-1.5 focus:outline-none focus:border-blue-500 appearance-none"
                             >
                                 <option value="">Unassigned</option>
                                 {project?.members?.map(member => (
@@ -103,10 +103,10 @@ const ActiveTasksBoard = ({ project, tasks = [], setTasks }) => {
                             </select>
                         </div>
                         <div className="flex justify-end gap-2 mt-1">
-                            <button type="button" onClick={() => setIsCreating(false)} className="text-slate-500 hover:text-slate-300 px-3 py-1 text-sm font-medium">
+                            <button type="button" onClick={() => setIsCreating(false)} className="text-slate-500 hover:text-slate-700 dark:text-slate-300 px-3 py-1 text-sm font-medium">
                                 Cancel
                             </button>
-                            <button type="submit" className="bg-blue-600 text-white px-3 py-1 rounded-md text-sm font-medium hover:bg-blue-500 transition-colors">
+                            <button type="submit" className="bg-blue-600 text-slate-900 dark:text-slate-100 px-3 py-1 rounded-md text-sm font-medium hover:bg-blue-500 transition-colors">
                                 Add Task
                             </button>
                         </div>
@@ -122,22 +122,22 @@ const ActiveTasksBoard = ({ project, tasks = [], setTasks }) => {
                     </div>
                 ) : (
                     <table className="w-full text-left text-sm table-fixed">
-                        <thead className="sticky top-0 bg-slate-900/60 backdrop-blur-md z-10">
-                            <tr className="border-b border-slate-800 text-slate-500">
+                        <thead className="sticky top-0 bg-white dark:bg-slate-900/60 backdrop-blur-md z-10">
+                            <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500">
                                 <th className="px-4 py-3 font-medium w-6/12">Task</th>
                                 <th className="px-4 py-3 font-medium w-3/12">Assignee</th>
                                 <th className="px-4 py-3 font-medium w-3/12 pr-6 text-right">Status</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-800/50 text-slate-300">
+                        <tbody className="divide-y divide-slate-800/50 text-slate-700 dark:text-slate-300">
                             {tasks.map(task => {
                                 const canEdit = isOwner || task.assignee === user?.username;
                                 return (
-                                    <tr key={task._id} className="hover:bg-slate-800/30 transition-colors group">
+                                    <tr key={task._id} className="hover:bg-slate-100 dark:bg-slate-800/30 transition-colors group">
                                         <td className="px-4 py-3 truncate">{task.title}</td>
                                         <td className="px-4 py-3 truncate">
                                             <span className={`text-xs px-2 py-1 rounded-full ${task.assignee === 'Unassigned'
-                                                ? 'text-slate-400 bg-slate-800'
+                                                ? 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800'
                                                 : 'text-blue-400 bg-blue-500/10 border border-blue-500/20'
                                                 }`}>
                                                 @{task.assignee}
@@ -148,16 +148,16 @@ const ActiveTasksBoard = ({ project, tasks = [], setTasks }) => {
                                                 value={task.status}
                                                 onChange={(e) => updateTaskStatus(task._id, e.target.value)}
                                                 disabled={!canEdit}
-                                                className={`appearance-none bg-slate-950/50 outline-none cursor-pointer text-[10px] font-bold tracking-wide px-2 py-1 rounded border transition-colors text-center w-24
+                                                className={`appearance-none bg-slate-50 dark:bg-slate-950/50 outline-none cursor-pointer text-[10px] font-bold tracking-wide px-2 py-1 rounded border transition-colors text-center w-24
                                                 ${!canEdit ? 'opacity-50 cursor-not-allowed' : ''}
                                                 ${task.status === 'DONE' ? 'text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/10' : ''}
                                                 ${task.status === 'IN_PROGRESS' ? 'text-blue-400 border-blue-500/20 hover:bg-blue-500/10' : ''}
-                                                ${task.status === 'TODO' ? 'text-slate-500 border-slate-700/50 hover:bg-slate-800' : ''}
+                                                ${task.status === 'TODO' ? 'text-slate-500 border-slate-300 dark:border-slate-700/50 hover:bg-slate-100 dark:bg-slate-800' : ''}
                                             `}
                                             >
-                                                <option value="TODO" className="bg-slate-900 text-slate-300">TODO</option>
-                                                <option value="IN_PROGRESS" className="bg-slate-900 text-slate-300">IN PROG</option>
-                                                <option value="DONE" className="bg-slate-900 text-slate-300">DONE</option>
+                                                <option value="TODO" className="bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300">TODO</option>
+                                                <option value="IN_PROGRESS" className="bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300">IN PROG</option>
+                                                <option value="DONE" className="bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300">DONE</option>
                                             </select>
                                         </td>
                                     </tr>

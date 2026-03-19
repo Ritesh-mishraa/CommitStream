@@ -86,7 +86,7 @@ const ProjectSelector = ({ activeProject, setActiveProject }) => {
     };
 
     if (isLoading) {
-        return <div className="animate-pulse h-10 w-48 bg-slate-800 rounded-md"></div>;
+        return <div className="animate-pulse h-10 w-48 bg-slate-100 dark:bg-slate-800 rounded-md"></div>;
     }
 
     return (
@@ -94,13 +94,13 @@ const ProjectSelector = ({ activeProject, setActiveProject }) => {
             {/* Active Project Trigger */}
             <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-3 hover:bg-slate-800/50 p-2 rounded-lg transition-colors border border-transparent hover:border-slate-800"
+                className="flex items-center gap-3 hover:bg-slate-100 dark:bg-slate-800/50 p-2 rounded-lg transition-colors border border-transparent hover:border-slate-200 dark:border-slate-800"
             >
                 <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
                     <Folder className="w-5 h-5" />
                 </div>
                 <div className="text-left">
-                    <h1 className="text-base font-semibold text-slate-100 leading-tight">
+                    <h1 className="text-base font-semibold text-slate-900 dark:text-slate-100 leading-tight">
                         {activeProject ? activeProject.name : "No Projects Yet"}
                     </h1>
                     <p className="text-xs text-slate-500 flex items-center gap-1">
@@ -112,7 +112,7 @@ const ProjectSelector = ({ activeProject, setActiveProject }) => {
 
             {/* Dropdown Menu */}
             {isDropdownOpen && (
-                <div className="absolute top-full left-0 mt-2 w-72 bg-slate-950 border border-slate-800 rounded-lg shadow-2xl overflow-hidden z-50">
+                <div className="absolute top-full left-0 mt-2 w-72 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg shadow-2xl overflow-hidden z-50">
                     <div className="p-2">
                         <div className="text-xs uppercase tracking-wider text-slate-500 font-semibold px-3 py-2">Your Projects</div>
 
@@ -125,7 +125,7 @@ const ProjectSelector = ({ activeProject, setActiveProject }) => {
                                                 setActiveProject(proj);
                                                 setIsDropdownOpen(false);
                                             }}
-                                            className={`flex-1 flex items-center gap-2 px-2 py-2 text-sm rounded-md transition-colors text-left ${activeProject?._id === proj._id ? 'bg-blue-500/10 text-blue-300' : 'text-slate-300 hover:bg-slate-900'}`}
+                                            className={`flex-1 flex items-center gap-2 px-2 py-2 text-sm rounded-md transition-colors text-left ${activeProject?._id === proj._id ? 'bg-blue-500/10 text-blue-300' : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:bg-slate-900'}`}
                                         >
                                             <Folder className="w-4 h-4 opacity-70" />
                                             <span className="truncate">{proj.name}</span>
@@ -135,7 +135,7 @@ const ProjectSelector = ({ activeProject, setActiveProject }) => {
                                         {proj.owner?._id === user?._id && (
                                             <button
                                                 onClick={() => handleDeleteProject(proj._id)}
-                                                className="p-1.5 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all rounded hover:bg-slate-900"
+                                                className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all rounded hover:bg-white dark:bg-slate-900"
                                                 title="Delete Project"
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -147,7 +147,7 @@ const ProjectSelector = ({ activeProject, setActiveProject }) => {
                         </div>
                     </div>
 
-                    <div className="p-3 bg-slate-900/50 border-t border-slate-800">
+                    <div className="p-3 bg-white dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
                         {isCreating ? (
                             <form onSubmit={handleCreateProject} className="flex flex-col gap-2">
                                 <input
@@ -156,7 +156,7 @@ const ProjectSelector = ({ activeProject, setActiveProject }) => {
                                     placeholder="Project Name..."
                                     value={newProjectName}
                                     onChange={(e) => setNewProjectName(e.target.value)}
-                                    className="bg-slate-950 border border-slate-700 text-sm text-slate-200 rounded px-3 py-1.5 focus:outline-none focus:border-blue-500"
+                                    className="bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 rounded px-3 py-1.5 focus:outline-none focus:border-blue-500"
                                     required
                                 />
                                 <input
@@ -164,13 +164,13 @@ const ProjectSelector = ({ activeProject, setActiveProject }) => {
                                     placeholder="GitHub (e.g. facebook/react)"
                                     value={newGithubRepo}
                                     onChange={(e) => setNewGithubRepo(e.target.value)}
-                                    className="bg-slate-950 border border-slate-700 text-sm text-slate-200 rounded px-3 py-1.5 focus:outline-none focus:border-blue-500"
+                                    className="bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 rounded px-3 py-1.5 focus:outline-none focus:border-blue-500"
                                 />
                                 <div className="flex gap-2 mt-1">
-                                    <button type="submit" className="flex-1 bg-blue-600 text-white px-3 py-1.5 rounded text-sm font-medium hover:bg-blue-500 transition-colors">
+                                    <button type="submit" className="flex-1 bg-blue-600 text-slate-900 dark:text-slate-100 px-3 py-1.5 rounded text-sm font-medium hover:bg-blue-500 transition-colors">
                                         Save
                                     </button>
-                                    <button type="button" onClick={() => setIsCreating(false)} className="flex-1 text-slate-400 bg-slate-800 hover:text-slate-200 px-3 py-1.5 rounded text-sm font-medium">
+                                    <button type="button" onClick={() => setIsCreating(false)} className="flex-1 text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:text-slate-800 dark:text-slate-200 px-3 py-1.5 rounded text-sm font-medium">
                                         Cancel
                                     </button>
                                 </div>

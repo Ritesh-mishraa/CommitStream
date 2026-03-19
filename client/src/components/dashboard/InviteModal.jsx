@@ -55,19 +55,19 @@ const InviteModal = ({ isOpen, onClose, project }) => {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-slate-950 border border-slate-800 rounded-xl max-w-md w-full shadow-2xl overflow-hidden">
+            <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl max-w-md w-full shadow-2xl overflow-hidden">
                 <div className="flex justify-between items-center p-4 border-b border-slate-900">
                     <div className="flex items-center gap-2">
-                        <LinkIcon className="w-5 h-5 text-slate-300" />
-                        <h2 className="text-lg font-semibold text-slate-100">Invite Team Members</h2>
+                        <LinkIcon className="w-5 h-5 text-slate-700 dark:text-slate-300" />
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Invite Team Members</h2>
                     </div>
-                    <button onClick={onClose} className="p-1 rounded-md text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-colors">
+                    <button onClick={onClose} className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:bg-slate-800 transition-colors">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 <div className="p-5 space-y-4">
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
                         Share this link with your team. Anyone with this link will be added to the <strong>{project?.name}</strong> workspace. Valid for 7 days.
                     </p>
 
@@ -82,7 +82,7 @@ const InviteModal = ({ isOpen, onClose, project }) => {
                             type="text"
                             readOnly
                             value={isLoading ? 'Generating secure link...' : inviteLink}
-                            className="flex-1 bg-slate-900 border border-slate-800 text-sm text-slate-300 rounded px-3 py-2 pr-10 focus:outline-none focus:border-blue-500 font-mono"
+                            className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm text-slate-700 dark:text-slate-300 rounded px-3 py-2 pr-10 focus:outline-none focus:border-blue-500 font-mono"
                         />
                         <button
                             onClick={handleCopy}
@@ -90,7 +90,7 @@ const InviteModal = ({ isOpen, onClose, project }) => {
                             className={`p-2 rounded border flex items-center justify-center transition-colors min-w-[40px]
                             ${copied
                                     ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-500'
-                                    : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white disabled:opacity-50'
+                                    : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-700 hover:text-slate-900 dark:text-slate-100 disabled:opacity-50'
                                 }`}
                         >
                             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />)}
@@ -98,8 +98,8 @@ const InviteModal = ({ isOpen, onClose, project }) => {
                     </div>
                 </div>
 
-                <div className="p-4 bg-slate-900/50 border-t border-slate-800 flex justify-end">
-                    <button onClick={onClose} className="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                <div className="p-4 bg-white dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+                    <button onClick={onClose} className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-700 text-slate-800 dark:text-slate-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                         Close
                     </button>
                 </div>

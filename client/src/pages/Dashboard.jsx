@@ -118,13 +118,13 @@ const Dashboard = () => {
                                 placeholder="Paste Room ID or URL"
                                 value={joinRoomId}
                                 onChange={(e) => setJoinRoomId(e.target.value)}
-                                className="bg-slate-950 border border-slate-800 text-sm text-slate-200 rounded-md pl-9 pr-3 py-1.5 focus:outline-none focus:border-blue-500 transition-colors w-56"
+                                className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm text-slate-800 dark:text-slate-200 rounded-md pl-9 pr-3 py-1.5 focus:outline-none focus:border-blue-500 transition-colors w-56"
                                 required
                             />
                         </div>
                         <button
                             type="submit"
-                            className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium px-4 py-1.5 rounded-md flex items-center gap-2 transition-colors"
+                            className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium px-4 py-1.5 rounded-md flex items-center gap-2 transition-colors"
                         >
                             Join
                         </button>
@@ -132,7 +132,7 @@ const Dashboard = () => {
 
                     <button
                         onClick={() => setIsSettingsOpen(true)}
-                        className={`p-2 rounded-md border flex items-center justify-center transition-colors ${user?.hasGithubPat ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700' : 'bg-blue-500/10 border-blue-500/30 text-blue-400 hover:bg-blue-500/20'}`}
+                        className={`p-2 rounded-md border flex items-center justify-center transition-colors ${user?.hasGithubPat ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-700' : 'bg-blue-500/10 border-blue-500/30 text-blue-400 hover:bg-blue-500/20'}`}
                         title="GitHub Settings"
                     >
                         <Github className="w-4 h-4" />
@@ -141,13 +141,13 @@ const Dashboard = () => {
                     {/* Actions (Only show if a project is selected) */}
                     {activeProject && (
                         <>
-                            <div className="w-px h-6 bg-slate-800"></div>
+                            <div className="w-px h-6 bg-slate-100 dark:bg-slate-800"></div>
 
                             {/* Invite Team CTA */}
                             <button
                                 type="button"
                                 onClick={() => setIsInviteOpen(true)}
-                                className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium px-4 py-1.5 rounded-md flex items-center gap-2 transition-colors"
+                                className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium px-4 py-1.5 rounded-md flex items-center gap-2 transition-colors"
                             >
                                 <Users className="w-4 h-4" />
                                 Invite
@@ -162,14 +162,14 @@ const Dashboard = () => {
                                         placeholder="New Room Name"
                                         value={roomName}
                                         onChange={(e) => setRoomName(e.target.value)}
-                                        className="bg-slate-950 border border-slate-800 text-sm text-slate-200 rounded-md pl-9 pr-3 py-1.5 focus:outline-none focus:border-blue-500 transition-colors w-48"
+                                        className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm text-slate-800 dark:text-slate-200 rounded-md pl-9 pr-3 py-1.5 focus:outline-none focus:border-blue-500 transition-colors w-48"
                                         required
                                     />
                                 </div>
                                 <button
                                     type="submit"
                                     disabled={isCreating}
-                                    className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-4 py-1.5 rounded-md flex items-center gap-2 transition-colors disabled:opacity-50"
+                                    className="bg-blue-600 hover:bg-blue-500 text-slate-900 dark:text-slate-100 text-sm font-medium px-4 py-1.5 rounded-md flex items-center gap-2 transition-colors disabled:opacity-50"
                                 >
                                     {isCreating ? <CircleDashed className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                                     Create
@@ -202,7 +202,7 @@ const Dashboard = () => {
                     </div>
                 </div>
             ) : (
-                <div className="flex flex-col items-center justify-center p-20 text-slate-500 border border-slate-800 border-dashed rounded-lg bg-slate-900/20">
+                <div className="flex flex-col items-center justify-center p-20 text-slate-500 border border-slate-200 dark:border-slate-800 border-dashed rounded-lg bg-white dark:bg-slate-900/20">
                     <Folder className="w-12 h-12 mb-4 opacity-50" />
                     <p>Select or create a project to load the dashboard.</p>
                 </div>
