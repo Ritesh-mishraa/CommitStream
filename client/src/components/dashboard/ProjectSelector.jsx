@@ -94,7 +94,7 @@ const ProjectSelector = ({ activeProject, setActiveProject }) => {
             {/* Active Project Trigger */}
             <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-3 hover:bg-slate-100 dark:bg-slate-800/50 p-2 rounded-lg transition-colors border border-transparent hover:border-slate-200 dark:border-slate-800"
+                className="flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-800/50 p-2 rounded-lg transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-800"
             >
                 <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
                     <Folder className="w-5 h-5" />
@@ -125,7 +125,7 @@ const ProjectSelector = ({ activeProject, setActiveProject }) => {
                                                 setActiveProject(proj);
                                                 setIsDropdownOpen(false);
                                             }}
-                                            className={`flex-1 flex items-center gap-2 px-2 py-2 text-sm rounded-md transition-colors text-left ${activeProject?._id === proj._id ? 'bg-blue-500/10 text-blue-300' : 'text-slate-700 dark:text-slate-300 hover:bg-white dark:bg-slate-900'}`}
+                                            className={`flex-1 flex items-center gap-2 px-2 py-2 text-sm rounded-md transition-colors text-left ${activeProject?._id === proj._id ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80'}`}
                                         >
                                             <Folder className="w-4 h-4 opacity-70" />
                                             <span className="truncate">{proj.name}</span>
@@ -135,7 +135,7 @@ const ProjectSelector = ({ activeProject, setActiveProject }) => {
                                         {proj.owner?._id === user?._id && (
                                             <button
                                                 onClick={() => handleDeleteProject(proj._id)}
-                                                className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all rounded hover:bg-white dark:bg-slate-900"
+                                                className="p-1.5 text-slate-600 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all rounded hover:bg-slate-200 dark:hover:bg-slate-800"
                                                 title="Delete Project"
                                             >
                                                 <Trash2 className="w-4 h-4" />
