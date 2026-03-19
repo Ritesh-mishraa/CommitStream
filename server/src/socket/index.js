@@ -100,6 +100,15 @@ export const handleSocketConnection = (socket) => {
         }
     });
 
+    socket.on('webrtc:screen-share-stopped', ({ streamId }) => {
+        if (socket.roomId) {
+            socket.to(socket.roomId).emit('webrtc:screen-share-stopped', {
+                from: socket.id,
+                streamId
+            });
+        }
+    });
+
     socket.on('disconnect', () => {
         console.log(`User disconnected: ${socket.id}`);
         if (socket.roomId) {

@@ -15,16 +15,33 @@ export const useWebRTC = (socket, roomId) => {
     const peerConnections = useRef({}); // { socketId: RTCPeerConnection }
     const localStreamRef = useRef(null);
     const localScreenStreamRef = useRef(null);
+    const knownScreenStreamIds = useRef(new Set());
 
     const [isMuted, setIsMuted] = useState(true);
     const [isVideoOff, setIsVideoOff] = useState(false);
     const [isScreenSharing, setIsScreenSharing] = useState(false);
 
+    // Track negotiation state to resolve WebRTC signaling collisions
+    const makingOffer = useRef(false);
+    const ignoreOffer = useRef(false);
+    const iceCandidateQueue = useRef({}); // { socketId: [RTCIceCandidate] }
+
     // 1. Initialize local media
     useEffect(() => {
+        let isMounted = true;
+        let activeStream = null;
+
         const initLocalMedia = async () => {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                
+                if (!isMounted) {
+                    // If component unmounted while waiting for user permission, kill the hardware immediately
+                    stream.getTracks().forEach(track => track.stop());
+                    return;
+                }
+
+                activeStream = stream;
 
                 // Start muted by default
                 stream.getAudioTracks().forEach(track => track.enabled = false);
@@ -39,8 +56,13 @@ export const useWebRTC = (socket, roomId) => {
         initLocalMedia();
 
         return () => {
+            isMounted = false;
+            if (activeStream) {
+                activeStream.getTracks().forEach(track => track.stop());
+            }
             if (localStreamRef.current) {
                 localStreamRef.current.getTracks().forEach(track => track.stop());
+                localStreamRef.current = null;
             }
         };
     }, []);
@@ -59,13 +81,18 @@ export const useWebRTC = (socket, roomId) => {
         // Handle renegotiation 
         pc.onnegotiationneeded = async () => {
             try {
-                const offer = await pc.createOffer();
-                await pc.setLocalDescription(offer);
-                if (socket) {
-                    socket.emit('webrtc:offer', { to: remoteSocketId, offer });
+                makingOffer.current = true;
+                if (pc.signalingState === "stable") {
+                    const offer = await pc.createOffer();
+                    await pc.setLocalDescription(offer);
+                    if (socket) {
+                        socket.emit('webrtc:offer', { to: remoteSocketId, offer: pc.localDescription });
+                    }
                 }
             } catch (err) {
                 console.error('Error during renegotiation:', err);
+            } finally {
+                makingOffer.current = false;
             }
         };
 
@@ -79,6 +106,12 @@ export const useWebRTC = (socket, roomId) => {
         // Handle incoming media streams
         pc.ontrack = (event) => {
             const stream = event.streams[0];
+            
+            // Check if we received the socket notification for this stream being a Screen Share
+            if (knownScreenStreamIds.current.has(stream.id)) {
+                stream.isScreen = true;
+            }
+
             setRemoteStreams(prev => {
                 const existingStreams = prev[remoteSocketId] || [];
                 if (!existingStreams.some(s => s.id === stream.id)) {
@@ -106,34 +139,62 @@ export const useWebRTC = (socket, roomId) => {
             // We rely on onnegotiationneeded to fire the offer
         };
 
+        const flushIceCandidates = async (pc, socketId) => {
+            const queue = iceCandidateQueue.current[socketId];
+            if (queue && queue.length > 0) {
+                for (const candidate of queue) {
+                    try {
+                        await pc.addIceCandidate(candidate);
+                    } catch (e) {
+                        console.error('Failed to add queued ICE candidate', e);
+                    }
+                }
+                iceCandidateQueue.current[socketId] = [];
+            }
+        };
+
         const handleOfferReceived = async ({ from, offer }) => {
             let pc = peerConnections.current[from];
             if (!pc) pc = createPeerConnection(from);
 
-            // Check signaling state to avoid collision
-            if (pc.signalingState !== 'stable') {
-                await Promise.all([
-                    pc.setLocalDescription({ type: "rollback" }),
-                    pc.setRemoteDescription(new RTCSessionDescription(offer))
-                ]);
-            } else {
-                await pc.setRemoteDescription(new RTCSessionDescription(offer));
+            const polite = socket.id > from;
+            const offerCollision = (offer.type === "offer") && (makingOffer.current || pc.signalingState !== "stable");
+
+            ignoreOffer.current = !polite && offerCollision;
+            if (ignoreOffer.current) {
+                return; 
             }
 
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            socket.emit('webrtc:answer', { to: from, answer });
+            try {
+                if (offerCollision) {
+                    await Promise.all([
+                        pc.setLocalDescription({ type: "rollback" }),
+                        pc.setRemoteDescription(new RTCSessionDescription(offer))
+                    ]);
+                } else {
+                    await pc.setRemoteDescription(new RTCSessionDescription(offer));
+                }
+                
+                await flushIceCandidates(pc, from);
+
+                if (offer.type === "offer") {
+                    const answer = await pc.createAnswer();
+                    await pc.setLocalDescription(answer);
+                    socket.emit('webrtc:answer', { to: from, answer: pc.localDescription });
+                }
+            } catch (err) {
+                console.error('Collision resolution error:', err);
+            }
         };
 
         const handleAnswerReceived = async ({ from, answer }) => {
             const pc = peerConnections.current[from];
             if (pc) {
-                // If the remote description was already set (e.g., from rollback), we might not need this.
-                // But generally safe to attempt.
                 try {
                     await pc.setRemoteDescription(new RTCSessionDescription(answer));
+                    await flushIceCandidates(pc, from);
                 } catch (e) {
-                    console.log('Answer ignored, potentially already in stable state', e);
+                    console.log('Safe to silently ignore late answers', e);
                 }
             }
         };
@@ -142,20 +203,40 @@ export const useWebRTC = (socket, roomId) => {
             const pc = peerConnections.current[from];
             if (pc) {
                 try {
-                    await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                    const rtcCandidate = new RTCIceCandidate(candidate);
+                    if (pc.remoteDescription && pc.remoteDescription.type) {
+                        await pc.addIceCandidate(rtcCandidate);
+                    } else {
+                        if (!iceCandidateQueue.current[from]) iceCandidateQueue.current[from] = [];
+                        iceCandidateQueue.current[from].push(rtcCandidate);
+                    }
                 } catch (e) {
-                    console.log('Failed to add ICE candidate', e);
+                    if (!ignoreOffer.current) {
+                        console.error('Failed to handle ICE candidate', e);
+                    }
                 }
             }
         };
 
         const handleScreenShareId = ({ from, streamId }) => {
+            knownScreenStreamIds.current.add(streamId);
+            
             setRemoteStreams(prev => {
                 const existingStreams = prev[from] || [];
                 const updatedStreams = existingStreams.map(s => {
                     if (s.id === streamId) s.isScreen = true;
                     return s;
                 });
+                return { ...prev, [from]: updatedStreams };
+            });
+        };
+
+        const handleScreenShareStopped = ({ from, streamId }) => {
+            knownScreenStreamIds.current.delete(streamId);
+            setRemoteStreams(prev => {
+                const existingStreams = prev[from] || [];
+                // Remove the explicitly stopped screen stream completely from the local state
+                const updatedStreams = existingStreams.filter(s => s.id !== streamId);
                 return { ...prev, [from]: updatedStreams };
             });
         };
@@ -177,6 +258,7 @@ export const useWebRTC = (socket, roomId) => {
         socket.on('webrtc:answer-received', handleAnswerReceived);
         socket.on('webrtc:ice-received', handleIceReceived);
         socket.on('webrtc:screen-share-id', handleScreenShareId);
+        socket.on('webrtc:screen-share-stopped', handleScreenShareStopped);
         socket.on('user-left', handleUserLeft);
 
         // Tell the server we are NOW ready to receive 'user-joined' events
@@ -188,6 +270,7 @@ export const useWebRTC = (socket, roomId) => {
             socket.off('webrtc:answer-received', handleAnswerReceived);
             socket.off('webrtc:ice-received', handleIceReceived);
             socket.off('webrtc:screen-share-id', handleScreenShareId);
+            socket.off('webrtc:screen-share-stopped', handleScreenShareStopped);
             socket.off('user-left', handleUserLeft);
         };
 
@@ -241,6 +324,8 @@ export const useWebRTC = (socket, roomId) => {
     const stopScreenShare = () => {
         if (localScreenStreamRef.current) {
             const track = localScreenStreamRef.current.getTracks()[0];
+            const streamId = localScreenStreamRef.current.id;
+            
             track.stop();
 
             // Remove the track from all peers
@@ -248,6 +333,9 @@ export const useWebRTC = (socket, roomId) => {
                 const sender = pc.getSenders().find(s => s.track === track);
                 if (sender) pc.removeTrack(sender);
             });
+
+            // Signal other clients in the room to forcefully close this explicit stream layout
+            socket.emit('webrtc:screen-share-stopped', { streamId });
 
             setLocalScreenStream(null);
             localScreenStreamRef.current = null;
@@ -257,15 +345,29 @@ export const useWebRTC = (socket, roomId) => {
 
     const disconnect = useCallback(() => {
         if (localStreamRef.current) {
-            localStreamRef.current.getTracks().forEach(track => track.stop());
+            localStreamRef.current.getTracks().forEach(track => {
+                track.stop();
+            });
             localStreamRef.current = null;
             setLocalStream(null);
+            setIsVideoOff(true);
+            setIsMuted(true);
+        }
+
+        if (localScreenStreamRef.current) {
+            localScreenStreamRef.current.getTracks().forEach(track => track.stop());
+            const streamId = localScreenStreamRef.current.id;
+            socket?.emit('webrtc:screen-share-stopped', { streamId });
+            localScreenStreamRef.current = null;
+            setLocalScreenStream(null);
+            setIsScreenSharing(false);
         }
 
         Object.values(peerConnections.current).forEach(pc => pc.close());
         peerConnections.current = {};
         setRemoteStreams({});
-    }, []);
+        iceCandidateQueue.current = {};
+    }, [socket]);
 
     return {
         localStream,
