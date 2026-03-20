@@ -10,6 +10,7 @@ import About from './pages/About';
 import Onboarding from './pages/Onboarding';
 import Profile from './pages/Profile';
 import Tasks from './pages/Tasks';
+import Audits from './pages/Audits';
 import { ProjectProvider } from './context/ProjectContext';
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/tasks" element={<Tasks />} />
                     <Route path="/conflicts" element={<ConflictPredictor />} />
+                    <Route path="/audits" element={<Audits />} />
                     <Route path="/profile" element={<Profile />} />
                 </Route>
 

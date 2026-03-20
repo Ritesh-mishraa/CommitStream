@@ -46,3 +46,62 @@ DO NOT include any explanations or conversational text. Output ONLY the raw func
         throw new Error('Failed to generate AI resolution');
     }
 };
+
+/**
+ * Scans a given git diff with Gemini to find vulnerabilities, code smells, and optimizations.
+ * @param {string} diffText - The raw git diff containing changes
+ * @returns {Promise<Array>} - Array of found issues
+ */
+export const auditCodeWithAI = async (diffText) => {
+    try {
+        const prompt = `You are a Principal Application Security Engineer and Senior Staff Software Engineer reviewing a pull request diff.
+Your task is to analyze the following git diff and identify any security vulnerabilities, code smells, logical errors, or major optimization opportunities.
+
+Here is the diff:
+\`\`\`diff
+${diffText.substring(0, 30000)}
+\`\`\`
+
+Analyze the changes. Return a strict JSON array containing objects with the following schema:
+[
+  {
+    "type": "VULNERABILITY" | "CODE_SMELL" | "OPTIMIZATION" | "LOGIC_FLAW",
+    "severity": "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "INFO",
+    "file": "filename (if discernible from diff)",
+    "line": "approximate line number or context",
+    "message": "A concise description of the issue",
+    "suggestion": "How to fix or improve the code"
+  }
+]
+
+IMPORTANT: 
+- Return ONLY the raw JSON array.
+- Do not wrap it in markdown formatting blocks like \`\`\`json.
+- If no significant issues are found, return an empty array [].
+- Be highly critical but pragmatic. Do not flag trivial style issues unless they are severe.`;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+
+        let jsonText = response.text || '[]';
+        if (jsonText.startsWith('\`\`\`')) {
+            const firstNewline = jsonText.indexOf('\n');
+            const lastTripleR = jsonText.lastIndexOf('\`\`\`');
+            if (firstNewline !== -1 && lastTripleR !== -1 && lastTripleR > firstNewline) {
+                jsonText = jsonText.substring(firstNewline + 1, lastTripleR);
+            }
+        }
+        
+        try {
+            return JSON.parse(jsonText.trim());
+        } catch (e) {
+            console.error("Failed to parse Gemini JSON:", jsonText);
+            return [];
+        }
+    } catch (error) {
+        console.error("AI Audit Service Failed:", error);
+        throw new Error('Failed to run AI Security Audit');
+    }
+};
