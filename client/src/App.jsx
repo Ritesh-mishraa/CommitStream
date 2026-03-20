@@ -11,6 +11,8 @@ import Onboarding from './pages/Onboarding';
 import Profile from './pages/Profile';
 import Tasks from './pages/Tasks';
 import Audits from './pages/Audits';
+import TeamDirectory from './pages/TeamDirectory';
+import Insights from './pages/Insights';
 import { ProjectProvider } from './context/ProjectContext';
 
 function App() {
@@ -38,6 +40,8 @@ function App() {
                     <Route path="/tasks" element={<Tasks />} />
                     <Route path="/conflicts" element={<ConflictPredictor />} />
                     <Route path="/audits" element={<Audits />} />
+                    <Route path="/team" element={<TeamDirectory />} />
+                    <Route path="/insights" element={<Insights />} />
                     <Route path="/profile" element={<Profile />} />
                 </Route>
 

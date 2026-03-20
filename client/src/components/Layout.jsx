@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { GitMerge, Activity, LayoutDashboard, TerminalSquare, LogOut, Sun, Moon, PanelLeftClose, PanelLeftOpen, CheckSquare, ShieldCheck } from 'lucide-react';
+import { GitMerge, Activity, LayoutDashboard, TerminalSquare, LogOut, Sun, Moon, PanelLeftClose, PanelLeftOpen, CheckSquare, ShieldCheck, Users, BarChart3 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useProject } from '../context/ProjectContext';
@@ -69,6 +69,28 @@ const Layout = () => {
                             >
                                 <ShieldCheck className="w-4 h-4" />
                                 <span className="text-sm">AI Code Review</span>
+                            </NavLink>
+
+                            <NavLink
+                                to="/team"
+                                className={({ isActive }) => `
+                    flex items-center gap-3 px-3 py-2 rounded-md transition-colors
+                    ${isActive ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'}
+                  `}
+                            >
+                                <Users className="w-4 h-4" />
+                                <span className="text-sm">Team Directory</span>
+                            </NavLink>
+
+                            <NavLink
+                                to="/insights"
+                                className={({ isActive }) => `
+                    flex items-center gap-3 px-3 py-2 rounded-md transition-colors
+                    ${isActive ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'}
+                  `}
+                            >
+                                <BarChart3 className="w-4 h-4" />
+                                <span className="text-sm">Repository Insights</span>
                             </NavLink>
                         </nav>
                     </div>

@@ -4,6 +4,9 @@ import User from '../models/User.js';
 
 const getSecret = () => process.env.JWT_SECRET || 'fallback_secret_for_development_do_not_use_in_prod';
 
+// Storage for presence tracking
+const onlineUsersByProject = new Map(); // projectId -> Array of { userId, username, socketId, avatarColor }
+
 // Socket Auth Middleware
 io.use(async (socket, next) => {
     try {
@@ -114,6 +117,46 @@ export const handleSocketConnection = (socket) => {
         if (socket.roomId) {
             socket.to(socket.roomId).emit('user-left', { socketId: socket.id, username: socket.username });
         }
+        
+        // Handle global project presence departure
+        if (socket.activeProjectId) {
+            let users = onlineUsersByProject.get(socket.activeProjectId) || [];
+            users = users.filter(u => u.socketId !== socket.id);
+            onlineUsersByProject.set(socket.activeProjectId, users);
+            io.to(`project-${socket.activeProjectId}`).emit('presence-update', users);
+        }
+    });
+
+    // --- Global Presence System ---
+
+    socket.on('join-project', ({ projectId, user }) => {
+        if (!projectId || !user) return;
+        
+        socket.join(`project-${projectId}`);
+        socket.activeProjectId = projectId;
+        
+        let users = onlineUsersByProject.get(projectId) || [];
+        // Optional: Filter out duplicate sessions for the same user if desired, 
+        // but keeping it simple: just add this socket connection to the pool.
+        // We will deduplicate on the frontend by userId.
+        users = users.filter(u => u.socketId !== socket.id); // safety
+        users.push({ userId: user._id.toString(), username: user.username, socketId: socket.id, avatarColor: user.avatarColor });
+        
+        onlineUsersByProject.set(projectId, users);
+        
+        io.to(`project-${projectId}`).emit('presence-update', users);
+    });
+
+    socket.on('leave-project', ({ projectId }) => {
+        if (!projectId) return;
+        socket.leave(`project-${projectId}`);
+        socket.activeProjectId = null;
+        
+        let users = onlineUsersByProject.get(projectId) || [];
+        users = users.filter(u => u.socketId !== socket.id);
+        onlineUsersByProject.set(projectId, users);
+        
+        io.to(`project-${projectId}`).emit('presence-update', users);
     });
 };
 
