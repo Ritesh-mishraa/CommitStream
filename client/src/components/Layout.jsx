@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { GitMerge, Activity, LayoutDashboard, TerminalSquare, LogOut, Sun, Moon, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { GitMerge, Activity, LayoutDashboard, TerminalSquare, LogOut, Sun, Moon, PanelLeftClose, PanelLeftOpen, CheckSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useProject } from '../context/ProjectContext';
+import ProjectSelector from './dashboard/ProjectSelector';
 
 const Layout = () => {
     const { user, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
+    const { activeProject, setActiveProject } = useProject();
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     return (
@@ -44,6 +47,17 @@ const Layout = () => {
                             >
                                 <GitMerge className="w-4 h-4" />
                                 <span className="text-sm">Conflict Predictor</span>
+                            </NavLink>
+
+                            <NavLink
+                                to="/tasks"
+                                className={({ isActive }) => `
+                    flex items-center gap-3 px-3 py-2 rounded-md transition-colors
+                    ${isActive ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'}
+                  `}
+                            >
+                                <CheckSquare className="w-4 h-4" />
+                                <span className="text-sm">Tasks & Kanban</span>
                             </NavLink>
                         </nav>
                     </div>
@@ -87,9 +101,11 @@ const Layout = () => {
                             {isSidebarOpen ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
                         </button>
                         <div className="flex items-center gap-2">
-                            <span className="text-slate-500 text-xs font-mono">WORKSPACE</span>
-                            <span className="text-slate-600 dark:text-slate-400">/</span>
-                            <span className="text-slate-800 dark:text-slate-200 font-medium capitalize truncate max-w-[150px] sm:max-w-none">CommitStream MVP</span>
+                            <span className="text-slate-500 text-xs font-mono hidden sm:inline-block">WORKSPACE</span>
+                            <span className="text-slate-600 dark:text-slate-400 hidden sm:inline-block">/</span>
+                            <div className="scale-90 origin-left">
+                                <ProjectSelector activeProject={activeProject} setActiveProject={setActiveProject} />
+                            </div>
                         </div>
                     </div>
 

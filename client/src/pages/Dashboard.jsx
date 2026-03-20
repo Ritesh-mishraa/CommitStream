@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useProject } from '../context/ProjectContext';
 import { CircleDashed, Plus, Hash, Link as LinkIcon, Folder, Settings, Github, Users } from 'lucide-react';
-import ProjectSelector from '../components/dashboard/ProjectSelector';
 import RepoStatusPanel from '../components/dashboard/RepoStatusPanel';
 import ActiveTasksBoard from '../components/dashboard/ActiveTasksBoard';
 import TeamPulsePanel from '../components/dashboard/TeamPulsePanel';
@@ -12,7 +12,7 @@ import InviteModal from '../components/dashboard/InviteModal';
 const Dashboard = () => {
     const navigate = useNavigate();
     const { user, token } = useAuth();
-    const [activeProject, setActiveProject] = useState(null);
+    const { activeProject, setActiveProject } = useProject();
     const [tasks, setTasks] = useState([]);
     const [repoStats, setRepoStats] = useState(null);
     const [collaborators, setCollaborators] = useState([]);
@@ -100,15 +100,9 @@ const Dashboard = () => {
         <div className="space-y-6">
 
             {/* Header Area */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-
-                {/* Dynamic Project Selector */}
-                <ProjectSelector
-                    activeProject={activeProject}
-                    setActiveProject={setActiveProject}
-                />
-
-                <div className="flex items-center gap-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-end gap-4 overflow-x-auto">
+                
+                <div className="flex items-center gap-6 pb-2 md:pb-0">
                     {/* Join Room CTA (Globally Available) */}
                     <form onSubmit={handleJoinRoom} className="flex items-center gap-2">
                         <div className="relative">

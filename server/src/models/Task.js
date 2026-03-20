@@ -6,6 +6,11 @@ const taskSchema = new mongoose.Schema({
         required: true,
         trim: true
     },
+    description: {
+        type: String,
+        trim: true,
+        default: ''
+    },
     status: {
         type: String,
         enum: ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'],
@@ -24,6 +29,11 @@ const taskSchema = new mongoose.Schema({
         type: String,
         enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'],
         default: 'MEDIUM'
+    },
+    branchLink: {
+        type: String,
+        trim: true,
+        default: ''
     }
 }, { timestamps: true });
 

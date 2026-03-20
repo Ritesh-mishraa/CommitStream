@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { GitBranch, GitMerge, FileCode2, Package, Check, AlertTriangle, ShieldAlert, Cpu, Folder, X, History, Edit2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import ProjectSelector from '../components/dashboard/ProjectSelector';
@@ -9,6 +10,7 @@ const API_BASE = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000/api';
 
 const ConflictPredictor = () => {
     const { token } = useAuth();
+    const location = useLocation();
     const [activeProject, setActiveProject] = useState(null);
     const [branches, setBranches] = useState([]);
     const [selectedBranches, setSelectedBranches] = useState([]);
@@ -38,9 +40,23 @@ const ConflictPredictor = () => {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(r => r.json())
-            .then(data => setBranches(data))
+            .then(data => {
+                setBranches(data);
+                
+                // Smart Workflow Hook: Pre-select branch if navigated here from Kanban "Review"
+                if (location.state?.branch) {
+                    const matchedBranch = data.find(b => b.name === location.state.branch);
+                    if (matchedBranch && !selectedBranches.includes(matchedBranch._id)) {
+                        setSelectedBranches(prev => {
+                            if (prev.includes(matchedBranch._id)) return prev;
+                            if (prev.length >= 2) return [prev[1], matchedBranch._id]; 
+                            return [...prev, matchedBranch._id];
+                        });
+                    }
+                }
+            })
             .catch(console.error);
-    }, [token, activeProject]);
+    }, [token, activeProject, location.state]);
 
     const toggleBranch = (id) => {
         setSelectedBranches(prev => {

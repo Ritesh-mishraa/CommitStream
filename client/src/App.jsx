@@ -9,6 +9,8 @@ import Home from './pages/Home';
 import About from './pages/About';
 import Onboarding from './pages/Onboarding';
 import Profile from './pages/Profile';
+import Tasks from './pages/Tasks';
+import { ProjectProvider } from './context/ProjectContext';
 
 function App() {
     return (
@@ -30,8 +32,9 @@ function App() {
                 <Route path="/onboarding" element={<Onboarding />} />
 
                 {/* Protected Dashboard Layout */}
-                <Route element={<Layout />}>
+                <Route element={<ProjectProvider><Layout /></ProjectProvider>}>
                     <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/tasks" element={<Tasks />} />
                     <Route path="/conflicts" element={<ConflictPredictor />} />
                     <Route path="/profile" element={<Profile />} />
                 </Route>

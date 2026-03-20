@@ -63,14 +63,16 @@ router.get('/', authMiddleware, async (req, res) => {
  */
 router.post('/', authMiddleware, async (req, res) => {
     try {
-        const { title, projectId, assignee, status, priority } = req.body;
+        const { title, description, projectId, assignee, status, priority, branchLink } = req.body;
 
         const task = await Task.create({
             title,
+            description,
             project: projectId,
             assignee: assignee || req.user.username,
             status,
-            priority
+            priority,
+            branchLink
         });
 
         res.status(201).json(task);
@@ -108,21 +110,13 @@ router.post('/', authMiddleware, async (req, res) => {
  *       200:
  *         description: Task status updated
  */
-router.patch('/:id/status', authMiddleware, async (req, res) => {
+router.patch('/:id', authMiddleware, async (req, res) => {
     try {
-        const { status } = req.body;
-        const validStatuses = ['TODO', 'IN_PROGRESS', 'DONE'];
-
-        if (!validStatuses.includes(status)) {
-            return res.status(400).json({ message: 'Invalid status' });
-        }
-
+        const { status, title, description, priority, assignee, branchLink } = req.body;
+        
         let task = await Task.findById(req.params.id).populate('project');
-        if (!task) {
-            return res.status(404).json({ message: 'Task not found' });
-        }
+        if (!task) return res.status(404).json({ message: 'Task not found' });
 
-        // Check if user is either the project owner or the task assignee
         const isOwner = req.user._id.toString() === task.project.owner.toString();
         const isAssignee = req.user.username === task.assignee;
 
@@ -130,10 +124,37 @@ router.patch('/:id/status', authMiddleware, async (req, res) => {
             return res.status(403).json({ message: 'Only the project owner or assigned user can update this task' });
         }
 
-        task.status = status;
-        await task.save();
+        if (status) {
+            const validStatuses = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'];
+            if (!validStatuses.includes(status)) return res.status(400).json({ message: 'Invalid status' });
+            task.status = status;
+        }
 
+        if (title !== undefined) task.title = title;
+        if (description !== undefined) task.description = description;
+        if (priority !== undefined) task.priority = priority;
+        if (assignee !== undefined) task.assignee = assignee;
+        if (branchLink !== undefined) task.branchLink = branchLink;
+
+        await task.save();
         res.json(task);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+router.delete('/:id', authMiddleware, async (req, res) => {
+    try {
+        const task = await Task.findById(req.params.id).populate('project');
+        if (!task) return res.status(404).json({ message: 'Task not found' });
+
+        const isOwner = req.user._id.toString() === task.project.owner.toString();
+        if (!isOwner && req.user.username !== task.assignee) {
+            return res.status(403).json({ message: 'Unauthorized' });
+        }
+
+        await task.deleteOne();
+        res.json({ message: 'Task removed' });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
