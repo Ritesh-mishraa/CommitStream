@@ -11,16 +11,9 @@ const About = () => {
         {
             name: "Ritesh Mishra",
             role: "Lead Developer",
-            bio: "Passionate about streamlining developer workflows and building intelligent collaboration tools.",
-            socials: { github: "#", linkedin: "#" },
+            bio: "Passionate about streamlining developer workflows and building intelligent robust collaboration tools.",
+            socials: { github: "https://github.com/Ritesh-mishraa", linkedin: "https://www.linkedin.com/in/ritesh-kumar-mishra-a7b8b3249/" },
             avatar: "RM"
-        },
-        {
-            name: "Alex Doe", 
-            role: "UI/UX Designer",
-            bio: "Crafting beautiful and intuitive interfaces for complex engineering tools.",
-            socials: { github: "#", linkedin: "#" },
-            avatar: "AD"
         }
     ];
 
@@ -37,7 +30,7 @@ const About = () => {
                         Our Motive
                     </h1>
                     <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto">
-                        CommitStream was built from the frustration of dealing with chaotic merge conflicts and fragmented team communication. Our mission is to provide an intelligent, real-time collaboration hub that empowers developers to predict, manage, and resolve conflicts seamlessly—before they disrupt the CI/CD pipeline.
+                        CommitStream was built from the frustration of dealing with chaotic merge conflicts and fragmented team communication. Our mission is to provide an intelligent, real-time collaboration hub that empowers developers to predict, manage, and resolve conflicts seamlessly-before they disrupt the CI/CD pipeline.
                     </p>
                 </motion.div>
 
@@ -76,7 +69,7 @@ const About = () => {
                 >
                     <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-12">Meet the Team</h2>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-12 max-w-3xl mx-auto">
+                    <div className="grid grid-cols-1 gap-12 max-w-sm mx-auto">
                         {team.map((member, idx) => (
                             <div key={idx} className="flex flex-col items-center group">
                                 <div className="w-24 h-24 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-2xl font-bold text-slate-700 dark:text-slate-300 mb-6 border-2 border-slate-300 dark:border-slate-700 group-hover:border-blue-500 transition-colors shadow-xl">
@@ -93,9 +86,9 @@ const About = () => {
                                     <a href={member.socials.linkedin} className="text-slate-500 hover:text-blue-400 transition-colors">
                                         <Linkedin className="w-5 h-5" />
                                     </a>
-                                    <a href="#" className="text-slate-500 hover:text-emerald-400 transition-colors">
+                                    {/* <a href="rajmi8948360380@gmail.com" className="text-slate-500 hover:text-emerald-400 transition-colors">
                                         <Mail className="w-5 h-5" />
-                                    </a>
+                                    </a> */}
                                 </div>
                             </div>
                         ))}

@@ -13,6 +13,7 @@ import projectsRouter from './routes/projects.js';
 import tasksRouter from './routes/tasks.js';
 import auditsRouter from './routes/audits.js';
 import insightsRouter from './routes/insights.js';
+import messagesRouter from './routes/messages.js';
 import { setupSwagger } from './config/swagger.js';
 
 dotenv.config();
@@ -46,6 +47,7 @@ app.use('/api/conflicts', conflictsRouter);
 app.use('/api/tasks', tasksRouter);
 app.use('/api/audits', auditsRouter);
 app.use('/api/insights', insightsRouter);
+app.use('/api/messages', messagesRouter);
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', time: new Date().toISOString() });

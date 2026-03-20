@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useProject } from '../context/ProjectContext';
 import { CircleDashed, Plus, Hash, Link as LinkIcon, Folder, Settings, Github, Users } from 'lucide-react';
 import RepoStatusPanel from '../components/dashboard/RepoStatusPanel';
-import ActiveTasksBoard from '../components/dashboard/ActiveTasksBoard';
+import QuickActionsPanel from '../components/dashboard/QuickActionsPanel';
 import TeamPulsePanel from '../components/dashboard/TeamPulsePanel';
 import GithubSettingsModal from '../components/dashboard/GithubSettingsModal';
 import InviteModal from '../components/dashboard/InviteModal';
@@ -13,7 +13,6 @@ const Dashboard = () => {
     const navigate = useNavigate();
     const { user, token } = useAuth();
     const { activeProject, setActiveProject } = useProject();
-    const [tasks, setTasks] = useState([]);
     const [repoStats, setRepoStats] = useState(null);
     const [collaborators, setCollaborators] = useState([]);
     const [roomName, setRoomName] = useState('');
@@ -27,11 +26,6 @@ const Dashboard = () => {
             if (!activeProject || !token) return;
 
             try {
-                // Fetch Tasks
-                const tasksRes = await fetch(`http://localhost:5000/api/tasks?projectId=${activeProject._id}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
                 // Fetch Stats
                 const statsRes = await fetch(`http://localhost:5000/api/projects/${activeProject._id}/stats`, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -42,9 +36,7 @@ const Dashboard = () => {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                if (tasksRes.ok) {
-                    setTasks(await tasksRes.json());
-                }
+
                 if (statsRes.ok) {
                     setRepoStats(await statsRes.json());
                 }
@@ -184,8 +176,8 @@ const Dashboard = () => {
                             setActiveProject={setActiveProject}
                         />
                     </div>
-                    <div className="col-span-12 lg:col-span-6">
-                        <ActiveTasksBoard project={activeProject} tasks={tasks} setTasks={setTasks} />
+                    <div className="col-span-12 lg:col-span-6 h-full">
+                        <QuickActionsPanel project={activeProject} />
                     </div>
                     <div className="col-span-12 lg:col-span-3">
                         <TeamPulsePanel

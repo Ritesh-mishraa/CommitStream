@@ -13,6 +13,7 @@ import Tasks from './pages/Tasks';
 import Audits from './pages/Audits';
 import TeamDirectory from './pages/TeamDirectory';
 import Insights from './pages/Insights';
+import Chat from './pages/Chat';
 import { ProjectProvider } from './context/ProjectContext';
 
 function App() {
@@ -42,6 +43,7 @@ function App() {
                     <Route path="/audits" element={<Audits />} />
                     <Route path="/team" element={<TeamDirectory />} />
                     <Route path="/insights" element={<Insights />} />
+                    <Route path="/chat" element={<Chat />} />
                     <Route path="/profile" element={<Profile />} />
                 </Route>
 

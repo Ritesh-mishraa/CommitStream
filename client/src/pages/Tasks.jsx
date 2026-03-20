@@ -275,13 +275,26 @@ const TaskModal = ({ isOpen, onClose, editingTask, projectId, colId, setTasks, t
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-medium text-slate-500 mb-1">Assignee</label>
-                            <select value={assignee} onChange={e => setAssignee(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-800 dark:text-slate-200 appearance-none">
-                                <option value={user?.username}>@{user?.username} (Me)</option>
+                            <label className="block text-xs font-medium text-slate-500 mb-1">Assignee (Email or Username)</label>
+                            <input 
+                                type="text" 
+                                list="assignee-list"
+                                required
+                                placeholder="Enter external email..."
+                                value={assignee} 
+                                onChange={e => setAssignee(e.target.value)} 
+                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-800 dark:text-slate-200"
+                            />
+                            <datalist id="assignee-list">
+                                <option value={user?.username} />
+                                <option value={user?.email} />
                                 {collaborators.map(c => c.username !== user?.username && (
-                                    <option key={c._id} value={c.username}>@{c.username}</option>
+                                    <React.Fragment key={c._id}>
+                                        <option value={c.email} />
+                                        <option value={c.username} />
+                                    </React.Fragment>
                                 ))}
-                            </select>
+                            </datalist>
                         </div>
                         <div>
                             <label className="block text-xs font-medium text-slate-500 mb-1">Priority</label>

@@ -1,6 +1,8 @@
 import express from 'express';
 import Task from '../models/Task.js';
+import Project from '../models/Project.js';
 import { authMiddleware } from '../middleware/auth.js';
+import { sendTaskAssignmentEmail } from '../utils/mailer.js';
 
 const router = express.Router();
 
@@ -74,6 +76,17 @@ router.post('/', authMiddleware, async (req, res) => {
             priority,
             branchLink
         });
+
+        // Fire-and-forget assignment email if the assignee string matches an email format
+        try {
+            const project = await Project.findById(projectId);
+            if (project) {
+                // The mailer catches invalid emails securely inside its own loop
+                sendTaskAssignmentEmail(assignee, title, project.name, priority);
+            }
+        } catch (mailErr) {
+            console.error("Mail trigger failed non-fatally", mailErr);
+        }
 
         res.status(201).json(task);
     } catch (error) {

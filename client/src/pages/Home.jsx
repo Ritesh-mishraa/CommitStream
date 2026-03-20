@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { GitBranch, GitMerge, FileCode2, Users, ArrowRight, BookOpen, X, CheckCircle2, Zap, Target, Video, CheckSquare, Github, LayoutDashboard, KeyRound } from 'lucide-react';
+import { GitBranch, GitMerge, FileCode2, Users, ArrowRight, BookOpen, X, CheckCircle2, Zap, Target, Video, CheckSquare, Github, LayoutDashboard, KeyRound, ShieldCheck, Activity } from 'lucide-react';
 
 const UserGuideModal = ({ isOpen, onClose, navigate }) => {
     const [showDetailedGuide, setShowDetailedGuide] = useState(false);
@@ -170,15 +170,45 @@ const UserGuideModal = ({ isOpen, onClose, navigate }) => {
                                         <li className="flex gap-3">
                                             <div className="mt-0.5"><Video className="w-3.5 h-3.5 text-emerald-500 mt-0.5" /></div>
                                             <div>
-                                                <p className="font-medium text-slate-900 dark:text-slate-100 text-sm">Live Video Conferencing</p>
-                                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Need to hash out a complex architecture decision? Launch or join interactive Audio/Video rooms directly from the dashboard to collaborate with your peers face-to-face while looking at the exact same code.</p>
+                                                <p className="font-medium text-slate-900 dark:text-slate-100 text-sm">Live Video Conferencing (WebRTC)</p>
+                                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Huddle rooms built natively into the platform for face-to-face pair programming and architecture planning.</p>
+                                            </div>
+                                        </li>
+                                        <li className="flex gap-3">
+                                            <div className="mt-0.5"><Users className="w-3.5 h-3.5 text-emerald-500 mt-0.5" /></div>
+                                            <div>
+                                                <p className="font-medium text-slate-900 dark:text-slate-100 text-sm">Real-Time Unified Chat</p>
+                                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Instantly communicate with any collaborator active in your repository by pinging the persistent Team Chat environment powered by WebSocket architectures.</p>
                                             </div>
                                         </li>
                                         <li className="flex gap-3">
                                             <div className="mt-0.5"><CheckSquare className="w-3.5 h-3.5 text-blue-400 mt-0.5" /></div>
                                             <div>
-                                                <p className="font-medium text-slate-900 dark:text-slate-100 text-sm">Active Task Assignment</p>
-                                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Keep the entire engineering team aligned. Create, track, and assign technical tasks directly within the Dashboard so everyone knows what priorities to tackle next.</p>
+                                                <p className="font-medium text-slate-900 dark:text-slate-100 text-sm">Interactive Kanban & Email Dispatch</p>
+                                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Define Tasks, drag-and-drop priorities, and freely assign GitHub developers using native email integrations. HTML alerts are dispatched natively on creation!</p>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                {/* AI & Telemetry */}
+                                <div className="bg-slate-50 dark:bg-slate-800/20 border border-slate-200 dark:border-slate-800/50 p-5 rounded-2xl">
+                                    <h4 className="font-semibold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+                                        <LayoutDashboard className="w-4 h-4 text-orange-500" /> Advanced Telemetry & Security
+                                    </h4>
+                                    <ul className="space-y-4">
+                                        <li className="flex gap-3">
+                                            <div className="mt-0.5"><ShieldCheck className="w-3.5 h-3.5 text-orange-500 mt-0.5" /></div>
+                                            <div className="flex-1">
+                                                <p className="font-medium text-slate-900 dark:text-slate-100 text-sm">AI Code Reviews & Security Audits</p>
+                                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Select any active branch to trigger a comprehensive static analysis. The Gemini-powered AI engine maps vulnerabilities, detects severe logic flaws, and suggests code optimizations natively highlighting exact filenames.</p>
+                                            </div>
+                                        </li>
+                                        <li className="flex gap-3">
+                                            <div className="mt-0.5"><Activity className="w-3.5 h-3.5 text-blue-500 mt-0.5" /></div>
+                                            <div className="flex-1">
+                                                <p className="font-medium text-slate-900 dark:text-slate-100 text-sm">Repository Insights Dashboard</p>
+                                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Measure the health of your agile workflows via Recharts-powered interactive analytics. Unpack Task priority heatmaps, weekly merge trends, and workload distribution metrics instantly.</p>
                                             </div>
                                         </li>
                                     </ul>
@@ -234,18 +264,18 @@ const Home = () => {
     const features = [
         {
             icon: <GitMerge className="w-6 h-6 text-blue-400 dark:text-blue-500" />,
-            title: "Smart Merge Resolution",
-            description: "Automatically detect and predict potential merge conflicts before they happen."
+            title: "Smart Merge Predictors",
+            description: "Automatically detect, interpret, and resolve potential merge conflicts using AI before they bottleneck integrations."
         },
         {
-            icon: <Users className="w-6 h-6 text-emerald-400 dark:text-emerald-500" />,
-            title: "Real-time Collaboration",
-            description: "Work together with your team seamlessly in dedicated conflict resolution rooms."
+            icon: <LayoutDashboard className="w-6 h-6 text-emerald-400 dark:text-emerald-500" />,
+            title: "Advanced DevOps Telemetry",
+            description: "Scale with native Kanban grids tracking priority flows backed seamlessly by SVG rendered analytic dashboards."
         },
         {
-            icon: <FileCode2 className="w-6 h-6 text-purple-400 dark:text-purple-500" />,
-            title: "Code Intelligence",
-            description: "Deep understand of your codebase to suggest the most optimal merge strategies."
+            icon: <ShieldCheck className="w-6 h-6 text-purple-400 dark:text-purple-500" />,
+            title: "Automated Security Audits",
+            description: "Inject Static Analysis scans safely mapping active branch vulnerabilities through precise LLM parsing tools."
         }
     ];
 

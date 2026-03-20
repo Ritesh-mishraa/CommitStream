@@ -1,6 +1,7 @@
 import { io } from '../index.js';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import Message from '../models/Message.js';
 
 const getSecret = () => process.env.JWT_SECRET || 'fallback_secret_for_development_do_not_use_in_prod';
 
@@ -157,6 +158,27 @@ export const handleSocketConnection = (socket) => {
         onlineUsersByProject.set(projectId, users);
         
         io.to(`project-${projectId}`).emit('presence-update', users);
+    });
+
+    socket.on('project-chat-message', async ({ projectId, text }) => {
+        if (!projectId || !text) return;
+
+        try {
+            // Write to database first for persistence
+            const message = await Message.create({
+                project: projectId,
+                sender: socket.user._id,
+                text
+            });
+
+            // Populate sender info before broadcasting
+            const populatedMessage = await message.populate('sender', 'username email avatarColor');
+
+            // Broadcast real-time instantly to everyone inside this specific project workspace
+            io.to(`project-${projectId}`).emit('new-project-message', populatedMessage);
+        } catch (error) {
+            console.error('Failed to broadcast global message:', error);
+        }
     });
 };
 
