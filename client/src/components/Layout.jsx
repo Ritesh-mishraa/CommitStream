@@ -109,11 +109,12 @@ const Layout = () => {
                     <div className="mt-auto p-4 border-t border-slate-200 dark:border-slate-800/50">
                         <div className="flex items-center gap-3">
                             <NavLink to="/profile" className="flex items-center gap-3 flex-1 hover:bg-slate-100 dark:hover:bg-slate-800/70 p-2 rounded-lg transition-colors cursor-pointer group">
-                                <div
-                                    className="w-8 h-8 rounded-full flex items-center justify-center border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-medium group-hover:border-blue-500 transition-colors"
-                                    style={{ backgroundColor: user?.avatarColor || '#333' }}
-                                >
-                                    <span className="text-xs">{user?.username?.charAt(0).toUpperCase()}</span>
+                                <div className="w-8 h-8 rounded-full flex items-center justify-center border border-slate-300 dark:border-slate-700 group-hover:border-blue-500 transition-colors overflow-hidden shadow-sm">
+                                    {user?.avatarUrl ? (
+                                        <img src={user.avatarUrl} alt={user.username} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-xs font-medium text-slate-800 dark:text-slate-200">{user?.username?.charAt(0).toUpperCase()}</span>
+                                    )}
                                 </div>
                                 <div className="flex flex-col flex-1 pl-1">
                                     <span className="text-sm text-slate-800 dark:text-slate-200 font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{user?.username}</span>

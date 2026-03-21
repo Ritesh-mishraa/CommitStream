@@ -1,6 +1,11 @@
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
+    githubId: {
+        type: String,
+        required: true,
+        unique: true
+    },
     username: {
         type: String,
         required: true,
@@ -11,23 +16,15 @@ const userSchema = new mongoose.Schema({
         required: true,
         unique: true,
     },
-    passwordHash: {
+    avatarUrl: {
         type: String,
-        required: true,
+        default: ''
     },
-    avatarColor: {
+    githubAccessToken: {
         type: String,
-        default: '#4f46e5' // Indigo-600
+        default: null
     },
     socketId: {
-        type: String,
-        default: null
-    },
-    githubPat: {
-        type: String,
-        default: null
-    },
-    githubUsername: {
         type: String,
         default: null
     }

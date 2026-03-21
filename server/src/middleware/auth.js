@@ -12,8 +12,9 @@ export const authMiddleware = async (req, res, next) => {
 
         const token = authHeader.split(' ')[1];
         const decoded = jwt.verify(token, getSecret());
+        const userId = decoded.userId || decoded.id;
 
-        const user = await User.findById(decoded.userId).select('-passwordHash');
+        const user = await User.findById(userId).select('-passwordHash');
         if (!user) {
             return res.status(401).json({ error: 'User no longer exists' });
         }

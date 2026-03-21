@@ -5,15 +5,16 @@ import Dashboard from './pages/Dashboard';
 import Room from './pages/Room';
 import ConflictPredictor from './pages/ConflictPredictor';
 import Auth from './pages/Auth';
+import AuthCallback from './pages/AuthCallback';
 import Home from './pages/Home';
 import About from './pages/About';
-import Onboarding from './pages/Onboarding';
 import Profile from './pages/Profile';
 import Tasks from './pages/Tasks';
 import Audits from './pages/Audits';
 import TeamDirectory from './pages/TeamDirectory';
 import Insights from './pages/Insights';
 import Chat from './pages/Chat';
+import ProtectedRoute from './components/ProtectedRoute';
 import { ProjectProvider } from './context/ProjectContext';
 
 function App() {
@@ -31,20 +32,22 @@ function App() {
                     <Route path="/about" element={<About />} />
                 </Route>
 
-                {/* Standalone Auth & Onboarding */}
+                {/* Standalone Auth & Verification */}
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/onboarding" element={<Onboarding />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
 
                 {/* Protected Dashboard Layout */}
-                <Route element={<ProjectProvider><Layout /></ProjectProvider>}>
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/tasks" element={<Tasks />} />
-                    <Route path="/conflicts" element={<ConflictPredictor />} />
-                    <Route path="/audits" element={<Audits />} />
-                    <Route path="/team" element={<TeamDirectory />} />
-                    <Route path="/insights" element={<Insights />} />
-                    <Route path="/chat" element={<Chat />} />
-                    <Route path="/profile" element={<Profile />} />
+                <Route element={<ProtectedRoute />}>
+                    <Route element={<ProjectProvider><Layout /></ProjectProvider>}>
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/tasks" element={<Tasks />} />
+                        <Route path="/conflicts" element={<ConflictPredictor />} />
+                        <Route path="/audits" element={<Audits />} />
+                        <Route path="/team" element={<TeamDirectory />} />
+                        <Route path="/insights" element={<Insights />} />
+                        <Route path="/chat" element={<Chat />} />
+                        <Route path="/profile" element={<Profile />} />
+                    </Route>
                 </Route>
 
                 {/* Standalone Fullscreen */}

@@ -19,9 +19,14 @@ const ProjectSelector = ({ activeProject, setActiveProject }) => {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
-            setProjects(data);
-            if (data.length > 0 && !activeProject) {
-                setActiveProject(data[0]);
+            if (res.ok) {
+                setProjects(Array.isArray(data) ? data : []);
+                if (Array.isArray(data) && data.length > 0 && !activeProject) {
+                    setActiveProject(data[0]);
+                }
+            } else {
+                setProjects([]);
+                console.error("API Error:", data.error);
             }
         } catch (error) {
             console.error("Failed to fetch projects", error);

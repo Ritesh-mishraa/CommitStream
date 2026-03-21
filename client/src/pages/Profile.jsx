@@ -65,12 +65,11 @@ const Profile = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl flex flex-col items-center text-center shadow-sm">
                     <div className="w-32 h-32 rounded-full border-4 border-slate-100 bg-slate-100 dark:bg-slate-800 mb-6 overflow-hidden flex items-center justify-center">
-                        {profileData?.avatarUrl ? (
-                            <img src={profileData.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                        {user?.avatarUrl || profileData?.avatarUrl ? (
+                            <img src={user?.avatarUrl || profileData?.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                         ) : (
                             <div 
-                                className="w-full h-full flex items-center justify-center text-5xl font-bold text-slate-900 dark:text-slate-100"
-                                style={{ backgroundColor: user?.avatarColor || '#333' }}
+                                className="w-full h-full flex items-center justify-center text-5xl font-bold text-slate-900 dark:text-slate-100 bg-slate-200 dark:bg-slate-700"
                             >
                                 {user?.username?.charAt(0).toUpperCase()}
                             </div>

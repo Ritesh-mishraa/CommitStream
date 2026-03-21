@@ -1,9 +1,12 @@
 import express from 'express';
-import http from 'http';
+import { createServer } from 'http';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { Server } from 'socket.io';
 import connectDB from './config/db.js';
+import session from 'express-session';
+import passport from 'passport';
+import configurePassport from './config/passport.js';
 
 import roomsRouter from './routes/rooms.js';
 import branchesRouter from './routes/branches.js';
@@ -22,18 +25,28 @@ dotenv.config();
 connectDB();
 
 const app = express();
-const server = http.createServer(app);
+const server = createServer(app);
 
 // Socket.io setup
 export const io = new Server(server, {
     cors: {
-        origin: '*',
-        methods: ['GET', 'POST']
+        origin: process.env.CLIENT_URL || "http://localhost:5173",
+        methods: ["GET", "POST"]
     }
 });
 
 app.use(cors());
 app.use(express.json());
+
+app.use(session({
+    secret: process.env.JWT_SECRET || 'fallback_session_secret_for_dev',
+    resave: false,
+    saveUninitialized: false
+}));
+
+configurePassport();
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Swagger Docs
 setupSwagger(app);

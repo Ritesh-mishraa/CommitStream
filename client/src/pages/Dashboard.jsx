@@ -6,7 +6,6 @@ import { CircleDashed, Plus, Hash, Link as LinkIcon, Folder, Settings, Github, U
 import RepoStatusPanel from '../components/dashboard/RepoStatusPanel';
 import QuickActionsPanel from '../components/dashboard/QuickActionsPanel';
 import TeamPulsePanel from '../components/dashboard/TeamPulsePanel';
-import GithubSettingsModal from '../components/dashboard/GithubSettingsModal';
 import InviteModal from '../components/dashboard/InviteModal';
 
 const Dashboard = () => {
@@ -18,7 +17,6 @@ const Dashboard = () => {
     const [roomName, setRoomName] = useState('');
     const [joinRoomId, setJoinRoomId] = useState('');
     const [isCreating, setIsCreating] = useState(false);
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isInviteOpen, setIsInviteOpen] = useState(false);
 
     useEffect(() => {
@@ -116,14 +114,6 @@ const Dashboard = () => {
                         </button>
                     </form>
 
-                    <button
-                        onClick={() => setIsSettingsOpen(true)}
-                        className={`p-2 rounded-md border flex items-center justify-center transition-colors ${user?.hasGithubPat ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-700' : 'bg-blue-500/10 border-blue-500/30 text-blue-400 hover:bg-blue-500/20'}`}
-                        title="GitHub Settings"
-                    >
-                        <Github className="w-4 h-4" />
-                    </button>
-
                     {/* Actions (Only show if a project is selected) */}
                     {activeProject && (
                         <>
@@ -193,11 +183,6 @@ const Dashboard = () => {
                     <p>Select or create a project to load the dashboard.</p>
                 </div>
             )}
-
-            <GithubSettingsModal
-                isOpen={isSettingsOpen}
-                onClose={() => setIsSettingsOpen(false)}
-            />
 
             <InviteModal
                 isOpen={isInviteOpen}
