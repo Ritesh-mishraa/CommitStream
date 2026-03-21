@@ -105,3 +105,42 @@ IMPORTANT:
         throw new Error('Failed to run AI Security Audit');
     }
 };
+
+/**
+ * Provides a highly concise, technical explanation of a highlighted collision block.
+ * @param {string} selectedCode - The explicit highlighted lines from the editor
+ * @param {string} contextCode - The surrounding file syntax for LLM context
+ * @param {string} branchName - The identifier of the branch owning the selection
+ * @returns {Promise<string>} - A 3-4 sentence explanation
+ */
+export const explainSnippetWithAI = async (selectedCode, contextCode, branchName) => {
+    try {
+        const prompt = `You are a Principal Software Engineer explaining a Git merge conflict to another developer.
+The user highlighted the following conflicting code block from branch '${branchName}':
+\`\`\`
+${selectedCode}
+\`\`\`
+
+Here is the surrounding file context for reference (Do not explain the entire file, ONLY the highlighted block):
+\`\`\`
+${contextCode}
+\`\`\`
+
+Explain technically why this specific block is colliding or what changed here.
+Constraints:
+- Respond in maximum 3-4 concise sentences.
+- Explain the precise Git collision mechanics (e.g., "Branch A bumped the dependency version to 1.3, but Main changed it to 1.4").
+- Do NOT use conversational fluff. Be highly technical, direct, and deterministic.
+- Do NOT output markdown code blocks. Just the raw text explanation.`;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+
+        return response.text?.trim() || "No explanation generated.";
+    } catch (error) {
+        console.error("AI Explanation Service Failed:", error);
+        throw new Error('Failed to generate AI explanation');
+    }
+};

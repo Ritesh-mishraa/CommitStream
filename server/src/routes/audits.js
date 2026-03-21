@@ -43,7 +43,7 @@ router.post('/scan', authMiddleware, async (req, res) => {
         }
 
         const user = await User.findById(req.user._id);
-        const pat = user?.githubPat || null;
+        const pat = user?.githubAccessToken || user?.githubPat || null;
 
         // Fetch repo details to determine the default branch
         const repoDetails = await fetchRepoDetails(project.githubRepo, pat);

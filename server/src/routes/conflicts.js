@@ -4,7 +4,7 @@ import User from '../models/User.js';
 import ConflictReport from '../models/ConflictReport.js';
 import { compareBranches, filterExactConflicts, fetchFileContent } from '../utils/githubService.js';
 import { authMiddleware } from '../middleware/auth.js';
-import { resolveConflictWithAI } from '../utils/aiService.js';
+import { resolveConflictWithAI, explainSnippetWithAI } from '../utils/aiService.js';
 
 const router = express.Router();
 
@@ -42,7 +42,7 @@ router.post('/predict', authMiddleware, async (req, res) => {
         }
 
         const user = await User.findById(req.user._id);
-        const pat = user?.githubPat || null;
+        const pat = user?.githubAccessToken || user?.githubPat || null;
 
         let compareHead, compareBase;
         try {
@@ -176,7 +176,7 @@ router.post('/resolve-file', authMiddleware, async (req, res) => {
         }
 
         const user = await User.findById(req.user._id);
-        const pat = user?.githubPat || null;
+        const pat = user?.githubAccessToken || user?.githubPat || null;
 
         // Fetch the raw diff from GitHub API
         const compareData = await compareBranches(project.githubRepo, branchIdA, branchIdB, pat);
@@ -241,7 +241,7 @@ router.post('/file-content', authMiddleware, async (req, res) => {
         }
 
         const user = await User.findById(req.user._id);
-        const pat = user?.githubPat || null;
+        const pat = user?.githubAccessToken || user?.githubPat || null;
 
         // Fetch contents in parallel
         const [contentA, contentB] = await Promise.all([
@@ -256,6 +256,51 @@ router.post('/file-content', authMiddleware, async (req, res) => {
 
     } catch (error) {
         console.error('Error fetching file content:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/conflicts/explain:
+ *   post:
+ *     summary: Request an AI explanation for a specific highlighted block of conflict code
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               selectedCode:
+ *                 type: string
+ *               contextCode:
+ *                 type: string
+ *               branchName:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: AI-generated explanation string
+ */
+router.post('/explain', authMiddleware, async (req, res) => {
+    try {
+        const { selectedCode, contextCode, branchName } = req.body;
+
+        if (!selectedCode) {
+            return res.status(400).json({ message: 'Missing selected codebase string' });
+        }
+
+        const explanation = await explainSnippetWithAI(
+            selectedCode, 
+            contextCode || 'No context provided', 
+            branchName || 'Unknown branch'
+        );
+        
+        res.json({ explanation });
+    } catch (error) {
+        console.error('Error explaining snippet via AI:', error);
         res.status(500).json({ message: error.message });
     }
 });

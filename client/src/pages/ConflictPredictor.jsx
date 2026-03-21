@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import ProjectSelector from '../components/dashboard/ProjectSelector';
 import Editor, { DiffEditor } from '@monaco-editor/react';
 import BranchDetailsModal from '../components/dashboard/BranchDetailsModal';
+import InlineAIPopover from '../components/dashboard/InlineAIPopover';
 
 const API_BASE = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000/api';
 
@@ -25,7 +26,55 @@ const ConflictPredictor = () => {
     const [isResolving, setIsResolving] = useState(false);
     const [isCommitting, setIsCommitting] = useState(false);
     const [historyBranch, setHistoryBranch] = useState(null);
+    const [popoverState, setPopoverState] = useState(null);
     const manualEditorRef = useRef(null);
+    const cursorSelectionDisposables = useRef([]);
+
+    const clearDisposables = () => {
+        cursorSelectionDisposables.current.forEach(d => {
+            if (d && typeof d.dispose === 'function') {
+                try { d.dispose(); } catch (e) {}
+            }
+        });
+        cursorSelectionDisposables.current = [];
+    };
+
+    // Cleanup on unmount or when resolvingFile changes
+    useEffect(() => {
+        return () => clearDisposables();
+    }, [resolvingFile]);
+
+    const handleEditorSelectionChange = (e, editorInstance, branchName) => {
+        const selection = e.selection;
+        const model = editorInstance.getModel();
+        if (!model) return;
+
+        const selectedText = model.getValueInRange(selection);
+        
+        // Don't pop up for tiny/empty selections
+        if (!selectedText.trim() || selectedText.length < 5) {
+            setPopoverState(null);
+            return;
+        }
+
+        const fileContext = model.getValue();
+        // Float the UI near the start of the selection block
+        const pos = editorInstance.getScrolledVisiblePosition(selection.getStartPosition());
+        const domNode = editorInstance.getDomNode();
+        
+        if (pos && domNode) {
+            const rect = domNode.getBoundingClientRect();
+            setPopoverState({
+                position: { 
+                    x: rect.left + pos.left + window.scrollX, 
+                    y: rect.top + pos.top + window.scrollY 
+                },
+                selectedText,
+                fileContext,
+                branchName
+            });
+        }
+    };
 
     // Fetch branches scoped to the active project
     useEffect(() => {
@@ -138,6 +187,7 @@ const ConflictPredictor = () => {
     };
 
     const handleResolveWithAI = async (filename) => {
+        setPopoverState(null); // Clear any floating AI popovers
         setResolvingFile(filename);
         setResolutionMode('AI');
         setIsResolving(true);
@@ -354,7 +404,13 @@ const ConflictPredictor = () => {
                                             original={originalCode}
                                             modified={resolvedCode}
                                             onMount={(editor) => {
+                                                clearDisposables();
                                                 manualEditorRef.current = editor.getModifiedEditor();
+                                                
+                                                const d1 = editor.getModifiedEditor().onDidChangeCursorSelection((e) => handleEditorSelectionChange(e, editor.getModifiedEditor(), branches.find(b => b._id === selectedBranches[1])?.name || 'Incoming'));
+                                                const d2 = editor.getOriginalEditor().onDidChangeCursorSelection((e) => handleEditorSelectionChange(e, editor.getOriginalEditor(), branches.find(b => b._id === selectedBranches[0])?.name || 'Base'));
+                                                
+                                                cursorSelectionDisposables.current.push(d1, d2);
                                             }}
                                             options={{ minimap: { enabled: false }, fontSize: 13, renderSideBySide: true, originalEditable: false, scrollBeyondLastLine: false, wordWrap: 'on' }}
                                         />
@@ -365,6 +421,11 @@ const ConflictPredictor = () => {
                                             theme="vs-dark"
                                             value={resolvedCode}
                                             onChange={setResolvedCode}
+                                            onMount={(editor) => {
+                                                clearDisposables();
+                                                const d = editor.onDidChangeCursorSelection((e) => handleEditorSelectionChange(e, editor, 'AI Resolving Scope'));
+                                                cursorSelectionDisposables.current.push(d);
+                                            }}
                                             options={{ minimap: { enabled: false }, fontSize: 13, scrollBeyondLastLine: false, wordWrap: 'on' }}
                                         />
                                     )}
@@ -482,6 +543,14 @@ const ConflictPredictor = () => {
                 onClose={() => setHistoryBranch(null)}
                 project={activeProject}
                 branchName={historyBranch}
+            />
+
+            <InlineAIPopover 
+                position={popoverState?.position}
+                selectedText={popoverState?.selectedText}
+                fileContext={popoverState?.fileContext}
+                branchName={popoverState?.branchName}
+                onClose={() => setPopoverState(null)}
             />
         </div>
     );

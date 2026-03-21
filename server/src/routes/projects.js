@@ -361,7 +361,7 @@ router.get('/:id/stats', async (req, res) => {
         }
 
         const user = await User.findById(req.user._id);
-        const pat = user?.githubPat || null;
+        const pat = user?.githubAccessToken || user?.githubPat || null;
 
         try {
             const stats = await fetchRepoStats(project.githubRepo, pat);
@@ -410,7 +410,7 @@ router.get('/:id/collaborators', async (req, res) => {
         }
 
         const user = await User.findById(req.user._id);
-        const pat = user?.githubPat || null;
+        const pat = user?.githubAccessToken || user?.githubPat || null;
 
         try {
             const collaborators = await fetchRepoCollaborators(project.githubRepo, pat);
@@ -476,7 +476,7 @@ router.post('/:id/commit', async (req, res) => {
         }
 
         const user = await User.findById(req.user._id);
-        const pat = user?.githubPat;
+        const pat = user?.githubAccessToken || user?.githubPat;
 
         if (!pat) {
             return res.status(403).json({ error: 'GitHub PAT is missing. Please update your profile.' });

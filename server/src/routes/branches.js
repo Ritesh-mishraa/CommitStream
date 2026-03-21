@@ -33,7 +33,7 @@ router.get('/', authMiddleware, async (req, res) => {
         }
 
         const user = await User.findById(req.user._id);
-        const pat = user?.githubPat || null;
+        const pat = user?.githubAccessToken || user?.githubPat || null;
 
         try {
             // Fetch branches and repo details (for default branch) in parallel
@@ -118,7 +118,7 @@ router.get('/commits', authMiddleware, async (req, res) => {
         }
 
         const user = await User.findById(req.user._id);
-        const pat = user?.githubPat || null;
+        const pat = user?.githubAccessToken || user?.githubPat || null;
 
         // Fetch the raw commit list from GitHub
         const rawCommits = await fetchBranchCommits(project.githubRepo, branch, pat);
