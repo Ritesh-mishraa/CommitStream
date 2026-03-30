@@ -12,7 +12,7 @@ router.get('/github', passport.authenticate('github', { scope: ['user:email', 'r
 
 // GitHub OAuth callback route
 router.get('/github/callback', 
-    passport.authenticate('github', { failureRedirect: 'http://localhost:5173/auth?error=oauth_failed' }),
+    passport.authenticate('github', { failureRedirect: process.env.NODE_ENV === 'production' ? '/auth?error=oauth_failed' : 'http://localhost:5173/auth?error=oauth_failed' }),
     (req, res) => {
         // Issue secure frontend token tied directly to the OAuth validated user ID
         const token = jwt.sign(
@@ -22,7 +22,10 @@ router.get('/github/callback',
         );
 
         // Subtly inject the token into a URL query parameter for the React router to absorb instantly
-        res.redirect(`http://localhost:5173/auth/callback?token=${token}`);
+        const redirectUrl = process.env.NODE_ENV === 'production' 
+            ? `/auth/callback?token=${token}` 
+            : `http://localhost:5173/auth/callback?token=${token}`;
+        res.redirect(redirectUrl);
     }
 );
 
