@@ -15,7 +15,7 @@ io.use(async (socket, next) => {
         if (!token) return next(new Error('Authentication error: Token missing'));
 
         const decoded = jwt.verify(token, getSecret());
-        const user = await User.findById(decoded.userId).select('-passwordHash');
+        const user = await User.findById(decoded.id || decoded.userId).select('-passwordHash');
         if (!user) return next(new Error('Authentication error: User not found'));
 
         socket.user = user;
