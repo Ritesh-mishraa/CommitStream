@@ -24,7 +24,9 @@ const configurePassport = () => {
     passport.use(new GitHubStrategy({
         clientID: process.env.GITHUB_CLIENT_ID,
         clientSecret: process.env.GITHUB_CLIENT_SECRET,
-        callbackURL: "http://localhost:5000/api/auth/github/callback",
+        callbackURL: process.env.NODE_ENV === 'production' 
+            ? "/api/auth/github/callback" 
+            : "http://localhost:5000/api/auth/github/callback",
         scope: ['user:email', 'repo']
     },
     async (accessToken, refreshToken, profile, done) => {
