@@ -10,7 +10,7 @@ const About = () => {
     const team = [
         {
             name: "Ritesh Mishra",
-            role: "Lead Developer",
+            role: "Founder",
             bio: "Passionate about streamlining developer workflows and building intelligent robust collaboration tools.",
             socials: { github: "https://github.com/Ritesh-mishraa", linkedin: "https://www.linkedin.com/in/ritesh-kumar-mishra-a7b8b3249/" },
             avatar: "RM"
@@ -67,7 +67,7 @@ const About = () => {
                     transition={{ duration: 0.6 }}
                     className="text-center"
                 >
-                    <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-12">Meet the Team</h2>
+                    <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-12">Meet the Founder</h2>
                     
                     <div className="grid grid-cols-1 gap-12 max-w-sm mx-auto">
                         {team.map((member, idx) => (

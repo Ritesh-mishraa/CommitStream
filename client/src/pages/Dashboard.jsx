@@ -25,12 +25,12 @@ const Dashboard = () => {
 
             try {
                 // Fetch Stats
-                const statsRes = await fetch(`http://localhost:5000/api/projects/${activeProject._id}/stats`, {
+                const statsRes = await fetch(`${import.meta.env.PROD ? '/api' : 'http://localhost:5000/api'}/projects/${activeProject._id}/stats`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 // Fetch Collaborators
-                const collabRes = await fetch(`http://localhost:5000/api/projects/${activeProject._id}/collaborators`, {
+                const collabRes = await fetch(`${import.meta.env.PROD ? '/api' : 'http://localhost:5000/api'}/projects/${activeProject._id}/collaborators`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
@@ -55,7 +55,7 @@ const Dashboard = () => {
 
         setIsCreating(true);
         try {
-            const res = await fetch('http://localhost:5000/api/rooms', {
+            const res = await fetch(import.meta.env.PROD ? '/api/rooms' : 'http://localhost:5000/api/rooms', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

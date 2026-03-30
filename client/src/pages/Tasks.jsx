@@ -11,7 +11,7 @@ import { KanbanColumn } from '../components/kanban/KanbanColumn';
 import { KanbanCard } from '../components/kanban/KanbanCard';
 import { Folder, X } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
 
 const COLUMNS = [
     { id: 'TODO', title: 'To Do', color: 'border-t-slate-500' },

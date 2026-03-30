@@ -7,6 +7,8 @@ import connectDB from './config/db.js';
 import session from 'express-session';
 import passport from 'passport';
 import configurePassport from './config/passport.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import roomsRouter from './routes/rooms.js';
 import branchesRouter from './routes/branches.js';
@@ -65,6 +67,16 @@ app.use('/api/messages', messagesRouter);
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', time: new Date().toISOString() });
 });
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+if (process.env.NODE_ENV === 'production') {
+    app.use(express.static(path.join(__dirname, '../../client/dist')));
+    app.get('*', (req, res) => {
+        res.sendFile(path.resolve(__dirname, '../../client/dist', 'index.html'));
+    });
+}
 
 // Setup socket events
 import('./socket/index.js');

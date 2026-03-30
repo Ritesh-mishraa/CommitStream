@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, GitCommit, FileCode2, Clock, User as UserIcon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-const API_BASE = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
 
 const BranchDetailsModal = ({ isOpen, onClose, project, branchName }) => {
     const { token } = useAuth();

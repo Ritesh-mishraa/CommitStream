@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Users, Github, User, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-const API_BASE = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
 
 const TeamPulsePanel = ({ project, collaborators = [], setActiveProject }) => {
     const [activeTab, setActiveTab] = useState('team'); // 'team' or 'github'

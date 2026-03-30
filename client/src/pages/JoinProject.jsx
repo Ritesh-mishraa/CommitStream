@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Users, Loader2, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
 
 const JoinProject = () => {
     const { inviteToken } = useParams();

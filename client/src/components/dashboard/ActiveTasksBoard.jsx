@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { CheckCircle2, CircleDashed, Play, Plus, X } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
 
 const ActiveTasksBoard = ({ project, tasks = [], setTasks }) => {
     const { user, token } = useAuth();

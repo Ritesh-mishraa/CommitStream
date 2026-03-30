@@ -7,7 +7,7 @@ import Editor, { DiffEditor } from '@monaco-editor/react';
 import BranchDetailsModal from '../components/dashboard/BranchDetailsModal';
 import InlineAIPopover from '../components/dashboard/InlineAIPopover';
 
-const API_BASE = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
 
 const ConflictPredictor = () => {
     const { token } = useAuth();

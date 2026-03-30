@@ -4,7 +4,7 @@ import { useProject } from '../context/ProjectContext';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Activity, GitMerge, FileCode2, Users, LayoutDashboard, Database, CheckSquare, Folder } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
 
 const Insights = () => {
     const { token } = useAuth();

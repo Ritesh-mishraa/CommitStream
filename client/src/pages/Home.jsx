@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { GitBranch, GitMerge, FileCode2, Users, ArrowRight, BookOpen, X, CheckCircle2, Zap, Target, Video, CheckSquare, Github, LayoutDashboard, KeyRound, ShieldCheck, Activity } from 'lucide-react';
 
 const UserGuideModal = ({ isOpen, onClose, navigate }) => {
-    const [showDetailedGuide, setShowDetailedGuide] = useState(false);
+    const [showDetailedGuide, setShowDetailedGuide] = useState(true);
 
     if (!isOpen) return null;
 
@@ -89,8 +89,8 @@ const UserGuideModal = ({ isOpen, onClose, navigate }) => {
                                         <li className="flex gap-3">
                                             <div className="mt-0.5"><div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2"></div></div>
                                             <div>
-                                                <p className="font-medium text-slate-900 dark:text-slate-100 text-sm">Secure Sign Up & Profile Onboarding</p>
-                                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Start by clicking "Start for free" or "Get Started". After a secure authentication, you'll land on an immersive Onboarding page to build out your professional profile, assign your role (Student/Professional), and sync avatar data.</p>
+                                                <p className="font-medium text-slate-900 dark:text-slate-100 text-sm">One-Click GitHub Login</p>
+                                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Start by clicking "Start for free" and sign in instantly using your GitHub account—no separate registration required. After authentication, you'll land on an Onboarding page to set your role (Student/Professional) and automatically sync your GitHub avatar and details.</p>
                                             </div>
                                         </li>
                                         <li className="flex gap-3">

@@ -4,7 +4,7 @@ import { useProject } from '../context/ProjectContext';
 import { io } from 'socket.io-client';
 import { MessageSquare, Send, Folder } from 'lucide-react';
 
-const SOCKET_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || (import.meta.env.PROD ? '/' : 'http://localhost:5000');
 const API_BASE = `${SOCKET_URL}/api`;
 
 const Chat = () => {

@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useProject } from '../context/ProjectContext';
 import { ShieldCheck, Cpu, Folder, GitBranch, AlertTriangle, Bug, Zap, AlertCircle } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_SERVER_URL || 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
 
 const Audits = () => {
     const { token } = useAuth();
