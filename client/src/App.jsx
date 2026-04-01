@@ -14,6 +14,7 @@ import Audits from './pages/Audits';
 import TeamDirectory from './pages/TeamDirectory';
 import Insights from './pages/Insights';
 import Chat from './pages/Chat';
+import JoinProject from './pages/JoinProject';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ProjectProvider } from './context/ProjectContext';
 
@@ -48,6 +49,7 @@ function App() {
                         <Route path="/chat" element={<Chat />} />
                         <Route path="/profile" element={<Profile />} />
                     </Route>
+                    <Route path="/join/:inviteToken" element={<JoinProject />} />
                 </Route>
 
                 {/* Standalone Fullscreen */}

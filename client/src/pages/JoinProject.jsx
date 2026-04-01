@@ -18,7 +18,7 @@ const JoinProject = () => {
         const joinProject = async () => {
             if (!token) {
                 // Should be caught by ProtectedRoute, but double check
-                navigate('/login', { state: { returnUrl: `/join/${inviteToken}` } });
+                navigate('/auth', { state: { returnUrl: `/join/${inviteToken}` } });
                 return;
             }
 
