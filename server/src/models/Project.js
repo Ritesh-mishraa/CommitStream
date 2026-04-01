@@ -24,6 +24,13 @@ const projectSchema = new mongoose.Schema({
         type: String,
         enum: ['Planning', 'Active', 'Completed', 'Archived'],
         default: 'Active'
+    },
+    joinCode: {
+        type: String,
+        default: null,
+        trim: true,
+        sparse: true,
+        unique: true
     }
 }, { timestamps: true });
 

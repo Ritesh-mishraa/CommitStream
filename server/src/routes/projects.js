@@ -1,8 +1,10 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import Project from '../models/Project.js';
 import User from '../models/User.js';
 import { fetchRepoStats, fetchRepoCollaborators, updateRepoFile } from '../utils/githubService.js';
+import { sendProjectInvitationEmail } from '../utils/mailer.js';
 import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -263,6 +265,162 @@ router.post('/join/:inviteToken', async (req, res) => {
             return res.status(400).json({ error: 'Invite link has expired' });
         }
         res.status(400).json({ error: 'Invalid invite link' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/projects/{id}/join-code:
+ *   post:
+ *     summary: Generate a 6-character short code for joining the project
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Short code generated
+ *       403:
+ *         description: Not authorized
+ */
+router.post('/:id/join-code', async (req, res) => {
+    try {
+        const project = await Project.findById(req.params.id);
+        if (!project) return res.status(404).json({ error: 'Project not found' });
+
+        if (project.owner.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ error: 'Only the project owner can generate join codes' });
+        }
+
+        const joinCode = crypto.randomBytes(3).toString('hex').toUpperCase(); // 6 chars
+        project.joinCode = joinCode;
+        await project.save();
+
+        res.json({ joinCode });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/projects/join-code:
+ *   post:
+ *     summary: Join a project using a short code
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - code
+ *             properties:
+ *               code:
+ *                 type: string
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully joined project
+ *       400:
+ *         description: Invalid code
+ */
+router.post('/join-code', async (req, res) => {
+    try {
+        const { code } = req.body;
+        if (!code) return res.status(400).json({ error: 'Join code is required' });
+
+        const project = await Project.findOne({ joinCode: code.toUpperCase() });
+        if (!project) return res.status(404).json({ error: 'Invalid join code or project not found' });
+
+        if (!project.members.includes(req.user._id)) {
+            project.members.push(req.user._id);
+            await project.save();
+        }
+
+        await project.populate('owner', 'username avatarColor');
+        await project.populate('members', 'username avatarColor');
+        res.json(project);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/projects/{id}/invite-email:
+ *   post:
+ *     summary: Send an email invitation directly
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - emailOrUsername
+ *             properties:
+ *               emailOrUsername:
+ *                 type: string
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Email sent successfully
+ *       403:
+ *         description: Not authorized
+ */
+router.post('/:id/invite-email', async (req, res) => {
+    try {
+        const { emailOrUsername } = req.body;
+        if (!emailOrUsername) return res.status(400).json({ error: 'Email or username is required' });
+
+        const project = await Project.findById(req.params.id);
+        if (!project) return res.status(404).json({ error: 'Project not found' });
+
+        if (project.owner.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ error: 'Only the project owner can send email invites' });
+        }
+
+        // Determine destination email
+        let targetEmail = emailOrUsername;
+        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailOrUsername);
+        
+        if (!isEmail) {
+            // Assume it's a username, look it up
+            const targetUser = await User.findOne({ username: emailOrUsername });
+            if (!targetUser) {
+                return res.status(404).json({ error: 'User with that username not found. Ask them to register first or provide an email.' });
+            }
+            targetEmail = targetUser.email;
+        }
+
+        const inviter = await User.findById(req.user._id);
+
+        const inviteToken = jwt.sign({ projectId: project._id }, getSecret(), { expiresIn: '7d' });
+        // Assume frontend is running on the origin in the request headers (or a provided VITE_FRONTEND_URL for prod)
+        // Since we are creating a full URL, we need the origin
+        const host = req.headers.origin || req.headers.referer || process.env.CLIENT_URL || 'http://localhost:5173';
+        const baseUrl = host.replace(/\/$/, ""); // Remove trailing slash if any
+        
+        const inviteLink = `${baseUrl}/join/${inviteToken}`;
+
+        await sendProjectInvitationEmail(targetEmail, project.name, inviter.username, inviteLink);
+
+        res.json({ message: 'Invitation email triggered' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 

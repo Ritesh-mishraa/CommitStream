@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { ChevronDown, Plus, Folder, Trash2, Settings, Loader2 } from 'lucide-react';
+import { ChevronDown, Plus, Folder, Trash2, Hash } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
 
@@ -8,9 +8,15 @@ const ProjectSelector = ({ activeProject, setActiveProject }) => {
     const { token, user } = useAuth();
     const [projects, setProjects] = useState([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    
     const [isCreating, setIsCreating] = useState(false);
     const [newProjectName, setNewProjectName] = useState('');
     const [newGithubRepo, setNewGithubRepo] = useState('');
+    
+    const [isJoining, setIsJoining] = useState(false);
+    const [joinCode, setJoinCode] = useState('');
+    const [joinError, setJoinError] = useState('');
+
     const [isLoading, setIsLoading] = useState(true);
 
     const fetchProjects = async () => {
@@ -67,6 +73,41 @@ const ProjectSelector = ({ activeProject, setActiveProject }) => {
             }
         } catch (error) {
             console.error("Failed to create project", error);
+        }
+    };
+
+    const handleJoinProject = async (e) => {
+        e.preventDefault();
+        if (!joinCode.trim()) return;
+        setJoinError('');
+
+        try {
+            const res = await fetch(`${API_BASE}/projects/join-code`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ code: joinCode.trim() })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                // If the project is already in our list, just activate it
+                const existing = projects.find(p => p._id === data._id);
+                if (!existing) {
+                    setProjects(prev => [data, ...prev]);
+                }
+                setActiveProject(data);
+                setJoinCode('');
+                setIsJoining(false);
+                setIsDropdownOpen(false);
+            } else {
+                setJoinError(data.error || 'Invalid join code');
+            }
+        } catch (error) {
+            console.error("Failed to join project", error);
+            setJoinError('Network error');
         }
     };
 
@@ -152,16 +193,17 @@ const ProjectSelector = ({ activeProject, setActiveProject }) => {
                         </div>
                     </div>
 
-                    <div className="p-3 bg-white dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
+                    <div className="p-3 bg-white dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800 space-y-2">
                         {isCreating ? (
-                            <form onSubmit={handleCreateProject} className="flex flex-col gap-2">
+                            <form onSubmit={handleCreateProject} className="flex flex-col gap-2 p-2 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                                <div className="text-xs font-semibold text-slate-500 mb-1">Create Workspace</div>
                                 <input
                                     type="text"
                                     autoFocus
                                     placeholder="Project Name..."
                                     value={newProjectName}
                                     onChange={(e) => setNewProjectName(e.target.value)}
-                                    className="bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 rounded px-3 py-1.5 focus:outline-none focus:border-blue-500"
+                                    className="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 rounded px-3 py-1.5 focus:outline-none focus:border-blue-500"
                                     required
                                 />
                                 <input
@@ -169,24 +211,55 @@ const ProjectSelector = ({ activeProject, setActiveProject }) => {
                                     placeholder="GitHub (e.g. facebook/react)"
                                     value={newGithubRepo}
                                     onChange={(e) => setNewGithubRepo(e.target.value)}
-                                    className="bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 rounded px-3 py-1.5 focus:outline-none focus:border-blue-500"
+                                    className="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 rounded px-3 py-1.5 focus:outline-none focus:border-blue-500"
                                 />
                                 <div className="flex gap-2 mt-1">
-                                    <button type="submit" className="flex-1 bg-blue-600 text-slate-900 dark:text-slate-100 px-3 py-1.5 rounded text-sm font-medium hover:bg-blue-500 transition-colors">
+                                    <button type="submit" className="flex-1 bg-blue-600 text-white px-3 py-1.5 rounded text-sm font-medium hover:bg-blue-500 transition-colors">
                                         Save
                                     </button>
-                                    <button type="button" onClick={() => setIsCreating(false)} className="flex-1 text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:text-slate-800 dark:text-slate-200 px-3 py-1.5 rounded text-sm font-medium">
+                                    <button type="button" onClick={() => setIsCreating(false)} className="flex-1 text-slate-600 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 px-3 py-1.5 rounded text-sm font-medium">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        ) : isJoining ? (
+                             <form onSubmit={handleJoinProject} className="flex flex-col gap-2 p-2 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                                <div className="text-xs font-semibold text-slate-500 mb-1">Join with Code</div>
+                                {joinError && <div className="text-xs text-red-500">{joinError}</div>}
+                                <input
+                                    type="text"
+                                    autoFocus
+                                    placeholder="Enter 6-char code"
+                                    value={joinCode}
+                                    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                                    maxLength={6}
+                                    className="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 rounded px-3 py-2 focus:outline-none focus:border-blue-500 font-mono tracking-widest text-center uppercase font-bold"
+                                    required
+                                />
+                                <div className="flex gap-2 mt-1">
+                                    <button type="submit" className="flex-1 bg-emerald-600 text-white px-3 py-1.5 rounded text-sm font-medium hover:bg-emerald-500 transition-colors">
+                                        Join
+                                    </button>
+                                    <button type="button" onClick={() => { setIsJoining(false); setJoinError(''); }} className="flex-1 text-slate-600 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 px-3 py-1.5 rounded text-sm font-medium">
                                         Cancel
                                     </button>
                                 </div>
                             </form>
                         ) : (
-                            <button
-                                onClick={() => setIsCreating(true)}
-                                className="w-full flex items-center gap-2 text-sm text-blue-400 font-medium hover:text-blue-300 px-2 py-1.5 rounded transition-colors"
-                            >
-                                <Plus className="w-4 h-4" /> Create New Project
-                            </button>
+                            <div className="flex flex-col gap-1">
+                                <button
+                                    onClick={() => { setIsCreating(true); setIsJoining(false); }}
+                                    className="w-full flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 font-medium hover:bg-blue-50 dark:hover:bg-blue-500/10 px-2 py-2 rounded transition-colors"
+                                >
+                                    <Plus className="w-4 h-4" /> Create New Workspace
+                                </button>
+                                <button
+                                    onClick={() => { setIsJoining(true); setIsCreating(false); }}
+                                    className="w-full flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400 font-medium hover:bg-emerald-50 dark:hover:bg-emerald-500/10 px-2 py-2 rounded transition-colors"
+                                >
+                                    <Hash className="w-4 h-4" /> Join via Code
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
