@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useProject } from '../context/ProjectContext';
+import { useSocket } from '../hooks/useSocket';
 import { 
     DndContext, closestCorners, KeyboardSensor, PointerSensor, 
     useSensor, useSensors, DragOverlay 
@@ -24,6 +25,7 @@ const Tasks = () => {
     const { user, token } = useAuth();
     const { activeProject } = useProject();
     const navigate = useNavigate();
+    const { socket } = useSocket(user?.username, token);
 
     const [tasks, setTasks] = useState([]);
     const [activeId, setActiveId] = useState(null);
@@ -46,6 +48,39 @@ const Tasks = () => {
         };
         fetchTasks();
     }, [activeProject, token]);
+
+    useEffect(() => {
+        if (!socket || !activeProject || !user) return;
+
+        // Join the project room to receive events
+        socket.emit('join-project', { projectId: activeProject._id, user });
+
+        const handleTaskCreated = (newTask) => {
+            setTasks(prev => {
+                if (!prev.some(t => t._id === newTask._id)) return [...prev, newTask];
+                return prev;
+            });
+        };
+
+        const handleTaskUpdated = (updatedTask) => {
+            setTasks(prev => prev.map(t => t._id === updatedTask._id ? updatedTask : t));
+        };
+
+        const handleTaskDeleted = (deletedTaskId) => {
+            setTasks(prev => prev.filter(t => t._id !== deletedTaskId));
+        };
+
+        socket.on('task-created', handleTaskCreated);
+        socket.on('task-updated', handleTaskUpdated);
+        socket.on('task-deleted', handleTaskDeleted);
+
+        return () => {
+            socket.emit('leave-project', { projectId: activeProject._id });
+            socket.off('task-created', handleTaskCreated);
+            socket.off('task-updated', handleTaskUpdated);
+            socket.off('task-deleted', handleTaskDeleted);
+        };
+    }, [socket, activeProject, user]);
 
     const handleDragStart = (event) => setActiveId(event.active.id);
 
@@ -275,26 +310,18 @@ const TaskModal = ({ isOpen, onClose, editingTask, projectId, colId, setTasks, t
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-medium text-slate-500 mb-1">Assignee (Email or Username)</label>
-                            <input 
-                                type="text" 
-                                list="assignee-list"
+                            <label className="block text-xs font-medium text-slate-500 mb-1">Assignee</label>
+                            <select 
                                 required
-                                placeholder="Enter external email..."
                                 value={assignee} 
                                 onChange={e => setAssignee(e.target.value)} 
-                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-800 dark:text-slate-200"
-                            />
-                            <datalist id="assignee-list">
-                                <option value={user?.username} />
-                                <option value={user?.email} />
+                                className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-3 py-2 text-sm focus:border-blue-500 outline-none text-slate-800 dark:text-slate-200 appearance-none"
+                            >
+                                <option value={user?.username}>{user?.username} (You)</option>
                                 {collaborators.map(c => c.username !== user?.username && (
-                                    <React.Fragment key={c._id}>
-                                        <option value={c.email} />
-                                        <option value={c.username} />
-                                    </React.Fragment>
+                                    <option key={c._id} value={c.username}>{c.username}</option>
                                 ))}
-                            </datalist>
+                            </select>
                         </div>
                         <div>
                             <label className="block text-xs font-medium text-slate-500 mb-1">Priority</label>

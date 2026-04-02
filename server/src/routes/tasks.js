@@ -1,8 +1,10 @@
 import express from 'express';
 import Task from '../models/Task.js';
 import Project from '../models/Project.js';
+import User from '../models/User.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { sendTaskAssignmentEmail } from '../utils/mailer.js';
+import { io } from '../index.js';
 
 const router = express.Router();
 
@@ -77,17 +79,24 @@ router.post('/', authMiddleware, async (req, res) => {
             branchLink
         });
 
-        // Fire-and-forget assignment email if the assignee string matches an email format
+        // Fire-and-forget assignment email
         try {
+            let targetEmail = assignee;
+            const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(assignee);
+            if (!isEmail) {
+                const assigneeUser = await User.findOne({ username: assignee });
+                if (assigneeUser) targetEmail = assigneeUser.email;
+            }
+
             const project = await Project.findById(projectId);
             if (project) {
-                // The mailer catches invalid emails securely inside its own loop
-                sendTaskAssignmentEmail(assignee, title, project.name, priority);
+                sendTaskAssignmentEmail(targetEmail, title, project.name, priority);
             }
         } catch (mailErr) {
             console.error("Mail trigger failed non-fatally", mailErr);
         }
 
+        io.to(`project-${projectId}`).emit('task-created', task);
         res.status(201).json(task);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -150,6 +159,8 @@ router.patch('/:id', authMiddleware, async (req, res) => {
         if (branchLink !== undefined) task.branchLink = branchLink;
 
         await task.save();
+
+        io.to(`project-${task.project._id.toString()}`).emit('task-updated', task);
         res.json(task);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -167,6 +178,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
         }
 
         await task.deleteOne();
+        io.to(`project-${task.project._id.toString()}`).emit('task-deleted', req.params.id);
         res.json({ message: 'Task removed' });
     } catch (error) {
         res.status(500).json({ message: error.message });
