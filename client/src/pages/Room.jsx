@@ -172,15 +172,13 @@ const Room = () => {
                         {isScreenSharing ? <MonitorOff className="w-5 h-5" /> : <MonitorUp className="w-5 h-5" />}
                     </button>
                     <div className="w-px h-8 bg-slate-800 mx-2"></div>
-                    <a 
-                        href="/dashboard" 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
+                    <button 
+                        onClick={() => navigate('/dashboard')}
                         className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 px-4 py-2.5 rounded-full text-sm font-medium transition-colors flex items-center gap-2"
-                        title="Open Dashboard in new tab"
+                        title="Go to Dashboard"
                     >
                         <LayoutDashboard className="w-4 h-4" /> <span className="hidden md:inline">Dashboard</span>
-                    </a>
+                    </button>
                     <button onClick={handleLeave} className="bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-500 px-6 py-2.5 rounded-full text-sm font-bold tracking-wide transition-colors flex items-center gap-2">
                         <PhoneOff className="w-4 h-4" /> LEAVE
                     </button>
