@@ -121,7 +121,7 @@ const Room = () => {
 
     const handleLeave = () => {
         disconnect();
-        navigate('/dashboard');
+        navigate('/dashboard', { replace: true });
     };
 
     const handleCopyLink = () => {
