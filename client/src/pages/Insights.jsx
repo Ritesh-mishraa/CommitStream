@@ -119,7 +119,7 @@ const Insights = () => {
                         <Activity className="w-5 h-5 text-indigo-500" /> Branch Activity Trends (Week)
                     </h3>
                     <div className="h-64 w-full text-slate-800 dark:text-slate-200 text-xs">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="99%" height="100%">
                             <LineChart data={data.weeklyActivity} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" dark:stroke="#334155" opacity={0.5} />
                                 <XAxis dataKey="day" stroke="currentColor" tickMargin={10} />
@@ -144,7 +144,7 @@ const Insights = () => {
                     {data.taskStats && data.taskStats.reduce((a, b) => a + b.value, 0) > 0 ? (
                         <div className="flex-1 flex flex-col sm:flex-row items-center justify-center">
                             <div className="h-56 w-56 text-slate-800 dark:text-slate-200 text-xs">
-                                <ResponsiveContainer width="100%" height="100%">
+                                <ResponsiveContainer width="99%" height="100%">
                                     <PieChart>
                                         <Pie
                                             data={data.taskStats}
@@ -191,7 +191,7 @@ const Insights = () => {
                     
                     {data.priorities && data.priorities.reduce((a, b) => a + b.value, 0) > 0 ? (
                         <div className="h-64 w-full text-slate-800 dark:text-slate-200 text-xs">
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="99%" height="100%">
                                 <BarChart data={data.priorities} margin={{ top: 5, right: 20, bottom: 5, left: 0 }} layout="vertical">
                                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" dark:stroke="#334155" opacity={0.5} horizontal={true} vertical={false} />
                                     <XAxis type="number" stroke="currentColor" allowDecimals={false} />
