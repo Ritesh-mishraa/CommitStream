@@ -34,7 +34,7 @@ export const io = new Server(server, {
     cors: {
         origin: process.env.NODE_ENV === 'production' 
             ? process.env.RENDER_EXTERNAL_URL 
-            : "http://localhost:5173",
+            : /^http:\/\/localhost:\d+$/,
         methods: ["GET", "POST"]
     }
 });

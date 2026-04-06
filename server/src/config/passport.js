@@ -26,7 +26,7 @@ const configurePassport = () => {
         clientSecret: process.env.GITHUB_CLIENT_SECRET,
         callbackURL: process.env.NODE_ENV === 'production' 
             ? `${process.env.RENDER_EXTERNAL_URL}/api/auth/github/callback` 
-            : "http://localhost:5000/api/auth/github/callback",
+            : (process.env.GITHUB_CALLBACK_URL || "http://localhost:5000/api/auth/github/callback"),
         scope: ['user:email', 'repo']
     },
     async (accessToken, refreshToken, profile, done) => {

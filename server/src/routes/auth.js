@@ -8,11 +8,25 @@ const router = express.Router();
 const getSecret = () => process.env.JWT_SECRET || 'fallback_secret_for_development_do_not_use_in_prod';
 
 // Initiate GitHub OAuth flow
-router.get('/github', passport.authenticate('github', { scope: ['user:email', 'repo'] }));
+router.get('/github', (req, res, next) => {
+    if (req.query.returnTo) {
+        req.session.returnTo = req.query.returnTo;
+    } else if (req.headers.referer) {
+        try {
+            req.session.returnTo = new URL(req.headers.referer).origin;
+        } catch (e) { }
+    }
+    passport.authenticate('github', { scope: ['user:email', 'repo'] })(req, res, next);
+});
 
 // GitHub OAuth callback route
 router.get('/github/callback', 
-    passport.authenticate('github', { failureRedirect: process.env.NODE_ENV === 'production' ? '/auth?error=oauth_failed' : 'http://localhost:5173/auth?error=oauth_failed' }),
+    (req, res, next) => {
+        const clientUrl = req.session?.returnTo || 'http://localhost:5173';
+        passport.authenticate('github', { 
+            failureRedirect: process.env.NODE_ENV === 'production' ? '/auth?error=oauth_failed' : `${clientUrl}/auth?error=oauth_failed` 
+        })(req, res, next);
+    },
     (req, res) => {
         // Issue secure frontend token tied directly to the OAuth validated user ID
         const token = jwt.sign(
@@ -21,10 +35,15 @@ router.get('/github/callback',
             { expiresIn: '7d' }
         );
 
+        const clientUrl = req.session?.returnTo || 'http://localhost:5173';
+        if (req.session) {
+            delete req.session.returnTo;
+        }
+
         // Subtly inject the token into a URL query parameter for the React router to absorb instantly
         const redirectUrl = process.env.NODE_ENV === 'production' 
             ? `/auth/callback?token=${token}` 
-            : `http://localhost:5173/auth/callback?token=${token}`;
+            : `${clientUrl}/auth/callback?token=${token}`;
         res.redirect(redirectUrl);
     }
 );

@@ -36,7 +36,7 @@ const Auth = () => {
                 )}
 
                 <a 
-                    href={import.meta.env.PROD ? '/api/auth/github' : 'http://localhost:5000/api/auth/github'}
+                    href={import.meta.env.PROD ? '/api/auth/github' : `http://localhost:5000/api/auth/github?returnTo=${encodeURIComponent(window.location.origin)}`}
                     className="w-full bg-[#24292e] hover:bg-[#1b1f23] dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium py-4 rounded-xl text-base transition-all shadow-lg flex justify-center items-center gap-3"
                 >
                     <Github className="w-5 h-5" />
