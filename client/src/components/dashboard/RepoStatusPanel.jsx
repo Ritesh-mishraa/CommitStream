@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { formatDistanceToNow } from 'date-fns';
 import { GitBranch, Clock, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -56,21 +57,47 @@ const RepoStatusPanel = ({ project, stats, setActiveProject }) => {
 
                     <div className="h-px bg-slate-100 dark:bg-slate-800 w-full my-4"></div>
 
-                    <div className="space-y-2">
-                        <div className="text-xs text-slate-500">Last Commit (main)</div>
-                        {stats && stats.lastCommit ? (
-                            <>
-                                <div className="text-sm text-slate-700 dark:text-slate-300 font-mono truncate">
-                                    <span className="text-blue-400 mr-2">{stats.lastCommit.hash}</span>
-                                    {stats.lastCommit.message}
-                                </div>
-                                <div className="text-xs text-slate-600 dark:text-slate-400 flex items-center gap-1 mt-1">
-                                    <Clock className="w-3 h-3" /> {stats.lastCommit.time} by @{stats.lastCommit.author}
-                                </div>
-                            </>
+                    <div className="space-y-3">
+                        <div className="text-xs text-slate-500 font-medium">Recent Commits</div>
+                        {stats && stats.recentCommits && stats.recentCommits.length > 0 ? (
+                            <div className="space-y-3">
+                                {stats.recentCommits.slice(0, 4).map((commit, index) => (
+                                    <div key={commit.hash || index} className="group relative">
+                                        {/* Connector line for all but the last item */}
+                                        {index !== Math.min(stats.recentCommits.length, 4) - 1 && (
+                                            <div className="absolute left-1.5 top-5 bottom-[-12px] w-px bg-slate-200 dark:bg-slate-800" />
+                                        )}
+                                        
+                                        <div className="flex gap-3 relative z-10">
+                                            {/* Timeline dot */}
+                                            <div className="mt-1">
+                                                <div className="w-3 h-3 rounded-full bg-blue-100 dark:bg-blue-900/50 border-2 border-blue-500 shadow-sm" />
+                                            </div>
+                                            
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="text-sm text-slate-700 dark:text-slate-300 font-medium truncate">
+                                                        {commit.message}
+                                                    </div>
+                                                    <span className="text-xs font-mono text-blue-500 dark:text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded flex-shrink-0">
+                                                        {commit.hash}
+                                                    </span>
+                                                </div>
+                                                <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-1">
+                                                    <span className="font-medium">@{commit.author}</span>
+                                                    <span>•</span>
+                                                    <Clock className="w-3 h-3" />
+                                                    <span>{formatDistanceToNow(new Date(commit.time), { addSuffix: true })}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         ) : (
-                            <div className="text-xs flex items-center gap-1 text-slate-600 dark:text-slate-400">
-                                <AlertCircle className="w-3 h-3" /> No commits found
+                            <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-md border border-dashed border-slate-200 dark:border-slate-700">
+                                <AlertCircle className="w-4 h-4 text-amber-500" /> 
+                                <span>No commits found in repository</span>
                             </div>
                         )}
                     </div>

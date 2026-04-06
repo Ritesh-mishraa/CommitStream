@@ -509,12 +509,7 @@ router.get('/:id/stats', async (req, res) => {
             return res.json({
                 activeBranches: 0,
                 openPRs: 0,
-                lastCommit: {
-                    hash: '---',
-                    message: 'No GitHub repository connected',
-                    time: new Date().toISOString(),
-                    author: 'System'
-                }
+                recentCommits: []
             });
         }
 
@@ -529,12 +524,7 @@ router.get('/:id/stats', async (req, res) => {
             res.json({
                 activeBranches: 0,
                 openPRs: 0,
-                lastCommit: {
-                    hash: 'ERROR',
-                    message: 'Repo not found or access denied',
-                    time: new Date().toISOString(),
-                    author: 'System'
-                }
+                recentCommits: []
             });
         }
     } catch (error) {

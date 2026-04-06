@@ -153,18 +153,18 @@ export const fetchRepoStats = async (repo, pat = null) => {
         const [branchesRes, pullsRes, commitsRes] = await Promise.all([
             client.get(`/repos/${repo}/branches?per_page=100`),
             client.get(`/repos/${repo}/pulls?state=open&per_page=100`),
-            client.get(`/repos/${repo}/commits?per_page=1`)
+            client.get(`/repos/${repo}/commits?per_page=4`)
         ]);
 
         return {
             activeBranches: branchesRes.data.length,
             openPRs: pullsRes.data.length,
-            lastCommit: commitsRes.data[0] ? {
-                hash: commitsRes.data[0].sha.substring(0, 7),
-                message: commitsRes.data[0].commit.message,
-                time: commitsRes.data[0].commit.author.date,
-                author: commitsRes.data[0].commit.author.name
-            } : null
+            recentCommits: commitsRes.data.map(commit => ({
+                hash: commit.sha.substring(0, 7),
+                message: commit.commit.message,
+                time: commit.commit.author.date,
+                author: commit.commit.author.name
+            }))
         };
     } catch (error) {
         console.error(`Failed to fetch stats for ${repo}:`, error.message);
