@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useProject } from '../context/ProjectContext';
 import { io } from 'socket.io-client';
 import { Users, PhoneCall, Mail, Github, Folder, UserCheck, UserMinus } from 'lucide-react';
+import SEO from '../components/SEO';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || (import.meta.env.PROD ? '/' : 'http://localhost:5000');
 
@@ -64,6 +65,11 @@ const TeamDirectory = () => {
 
     return (
         <div className="space-y-6">
+            <SEO 
+                title="Team Directory"
+                description="Connect with your development team. View live presence, GitHub profiles, and launch WebRTC video pair-programming calls."
+                keywords="team directory, team collaboration, live presence, pair programming, webrtc video call, developer network"
+            />
             <div className="border-b border-slate-200 dark:border-slate-800 pb-4">
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
                     <Users className="w-6 h-6 text-blue-500" />

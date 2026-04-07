@@ -11,6 +11,7 @@ import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { KanbanColumn } from '../components/kanban/KanbanColumn';
 import { KanbanCard } from '../components/kanban/KanbanCard';
 import { Folder, X } from 'lucide-react';
+import SEO from '../components/SEO';
 
 const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
 
@@ -186,6 +187,11 @@ const Tasks = () => {
 
     return (
         <div className="h-[calc(100vh-8rem)] flex flex-col">
+            <SEO 
+                title="Kanban Task Board"
+                description="Manage your agile workflow with CommitStream's interactive Kanban board. Assign tasks, track progress, and seamlessly integrate with GitHub branches."
+                keywords="kanban, task board, agile workflow, project management, developer tasks, github integration"
+            />
             <div className="mb-4 shrink-0">
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Tasks Board</h1>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">Manage tasks and track branch progress for {activeProject.name}.</p>

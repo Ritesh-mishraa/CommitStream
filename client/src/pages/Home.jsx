@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { GitBranch, GitMerge, FileCode2, Users, ArrowRight, BookOpen, X, CheckCircle2, Zap, Target, Video, CheckSquare, Github, LayoutDashboard, KeyRound, ShieldCheck, Activity } from 'lucide-react';
+import SEO from '../components/SEO';
 
 const UserGuideModal = ({ isOpen, onClose, navigate }) => {
     const [showDetailedGuide, setShowDetailedGuide] = useState(true);
@@ -281,6 +282,11 @@ const Home = () => {
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans overflow-x-hidden transition-colors selection:bg-blue-500/30">
+            <SEO 
+                title="Home"
+                description="CommitStream: The ultimate collaboration hub that predicts, manages, and resolves GitHub merge conflicts before they turn into blockers."
+                keywords="merge conflict, kanban, project management, team collaboration, predict merge conflicts, devops, git workflow"
+            />
             
             <UserGuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} navigate={navigate} />
 

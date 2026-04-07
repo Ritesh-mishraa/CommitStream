@@ -6,6 +6,7 @@ import ProjectSelector from '../components/dashboard/ProjectSelector';
 import Editor, { DiffEditor } from '@monaco-editor/react';
 import BranchDetailsModal from '../components/dashboard/BranchDetailsModal';
 import InlineAIPopover from '../components/dashboard/InlineAIPopover';
+import SEO from '../components/SEO';
 
 const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
 
@@ -280,6 +281,11 @@ const ConflictPredictor = () => {
 
     return (
         <div className="space-y-6">
+            <SEO 
+                title="Merge Conflict Predictor"
+                description="Predict, manage, and resolve GitHub merge conflicts with CommitStream's smart visual assistant and AI auto-resolution."
+                keywords="merge conflict, predictive merge, auto resolve conflict, git merge, git overlap, conflict predictor, devops tool, commitstream"
+            />
 
             {/* Header Area */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

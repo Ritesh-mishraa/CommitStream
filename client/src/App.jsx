@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import Layout from './components/Layout';
 import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
@@ -20,42 +21,44 @@ import { ProjectProvider } from './context/ProjectContext';
 
 function App() {
     return (
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-            <Routes>
-                {/* Public Routes with Navbar */}
-                <Route element={
-                    <>
-                        <Navbar />
-                        <Outlet />
-                    </>
-                }>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/about" element={<About />} />
-                </Route>
-
-                {/* Standalone Auth & Verification */}
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/auth/callback" element={<AuthCallback />} />
-
-                {/* Protected Dashboard Layout */}
-                <Route element={<ProtectedRoute />}>
-                    <Route element={<ProjectProvider><Layout /></ProjectProvider>}>
-                        <Route path="/dashboard" element={<Dashboard />} />
-                        <Route path="/tasks" element={<Tasks />} />
-                        <Route path="/conflicts" element={<ConflictPredictor />} />
-                        <Route path="/audits" element={<Audits />} />
-                        <Route path="/team" element={<TeamDirectory />} />
-                        <Route path="/insights" element={<Insights />} />
-                        <Route path="/chat" element={<Chat />} />
-                        <Route path="/profile" element={<Profile />} />
+        <HelmetProvider>
+            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                <Routes>
+                    {/* Public Routes with Navbar */}
+                    <Route element={
+                        <>
+                            <Navbar />
+                            <Outlet />
+                        </>
+                    }>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/about" element={<About />} />
                     </Route>
-                    <Route path="/join/:inviteToken" element={<JoinProject />} />
-                </Route>
 
-                {/* Standalone Fullscreen */}
-                <Route path="/room/:id" element={<Room />} />
-            </Routes>
-        </BrowserRouter>
+                    {/* Standalone Auth & Verification */}
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/auth/callback" element={<AuthCallback />} />
+
+                    {/* Protected Dashboard Layout */}
+                    <Route element={<ProtectedRoute />}>
+                        <Route element={<ProjectProvider><Layout /></ProjectProvider>}>
+                            <Route path="/dashboard" element={<Dashboard />} />
+                            <Route path="/tasks" element={<Tasks />} />
+                            <Route path="/conflicts" element={<ConflictPredictor />} />
+                            <Route path="/audits" element={<Audits />} />
+                            <Route path="/team" element={<TeamDirectory />} />
+                            <Route path="/insights" element={<Insights />} />
+                            <Route path="/chat" element={<Chat />} />
+                            <Route path="/profile" element={<Profile />} />
+                        </Route>
+                        <Route path="/join/:inviteToken" element={<JoinProject />} />
+                    </Route>
+
+                    {/* Standalone Fullscreen */}
+                    <Route path="/room/:id" element={<Room />} />
+                </Routes>
+            </BrowserRouter>
+        </HelmetProvider>
     );
 }
 
