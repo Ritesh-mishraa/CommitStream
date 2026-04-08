@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { GitBranch, GitMerge, FileCode2, Package, Check, AlertTriangle, ShieldAlert, Cpu, Folder, X, History, Edit2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import ProjectSelector from '../components/dashboard/ProjectSelector';
+import { useProject } from '../context/ProjectContext';
 import Editor, { DiffEditor } from '@monaco-editor/react';
 import BranchDetailsModal from '../components/dashboard/BranchDetailsModal';
 import InlineAIPopover from '../components/dashboard/InlineAIPopover';
@@ -13,7 +13,7 @@ const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' 
 const ConflictPredictor = () => {
     const { token } = useAuth();
     const location = useLocation();
-    const [activeProject, setActiveProject] = useState(null);
+    const { activeProject } = useProject();
     const [branches, setBranches] = useState([]);
     const [selectedBranches, setSelectedBranches] = useState([]);
     const [isPredicting, setIsPredicting] = useState(false);
@@ -296,11 +296,6 @@ const ConflictPredictor = () => {
                     </h1>
                     <p className="text-sm text-slate-500">Select two branches to predict and simulate merge conflicts.</p>
                 </div>
-
-                <ProjectSelector
-                    activeProject={activeProject}
-                    setActiveProject={setActiveProject}
-                />
             </div>
 
             {activeProject ? (
