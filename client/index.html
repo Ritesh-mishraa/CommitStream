@@ -6,13 +6,59 @@
     <title>CommitStream | Kanban, Tasks & Merge Conflict Predictor</title>
     <meta name="description" content="Manage tasks with an agile Kanban board, predict and resolve git merge conflicts instantly, and enhance team collaboration with CommitStream." />
     <meta name="keywords" content="merge conflict, kanban, task management, project management, team collaboration, github, agile board, merge collision, commitstream, git workflow" />
+    <meta name="theme-color" content="#0f172a" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="CommitStream | Streamline Dev Team Workflow" />
     <meta property="og:description" content="Manage your dev team's tasks with a real-time Kanban board and instantly predict GitHub merge conflicts before they happen." />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect width='18' height='18' x='3' y='3' rx='2'/><path d='m7 11 2-2-2-2'/><path d='M11 13h4'/></svg>" />
+    <style>
+      .app-loader-container {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8fafc; /* slate-50 */
+        z-index: 9999;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        .app-loader-container {
+          background-color: #020617; /* slate-950 */
+        }
+      }
+      .app-loader-spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid #3b82f633; /* blue-500 with opacity */
+        border-top-color: #3b82f6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 24px;
+      }
+      .app-loader-text {
+        color: #64748b; /* slate-500 */
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      @keyframes pulse {
+        50% { opacity: .5; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="app-loader-container">
+        <div class="app-loader-spinner"></div>
+        <div class="app-loader-text">Loading workspace...</div>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
