@@ -49,18 +49,16 @@ router.post('/scan', authMiddleware, async (req, res) => {
         const repoDetails = await fetchRepoDetails(project.githubRepo, pat);
         const defaultBranch = repoDetails.default_branch || 'main';
 
-        if (branch === defaultBranch) {
-            // Nothing to diff against if they select the default branch
-            return res.json([]);
-        }
-
         // Compare the target branch against the default branch
+        // If they selected the default branch, compare it against its previous commit to analyze the latest changes
+        const baseBranch = branch === defaultBranch ? `${branch}~1` : defaultBranch;
+
         let compareData;
         try {
-            compareData = await compareBranches(project.githubRepo, defaultBranch, branch, pat);
+            compareData = await compareBranches(project.githubRepo, baseBranch, branch, pat);
         } catch (compareError) {
             console.error("GitHub compare failed:", compareError.message);
-            return res.status(400).json({ message: "Cannot compare branches. They may not share common history." });
+            return res.status(400).json({ message: "Cannot compare branches. They may not share common history or no previous commit exists." });
         }
 
         if (!compareData.files || compareData.files.length === 0) {

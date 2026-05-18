@@ -25,13 +25,9 @@ const Audits = () => {
             .then(r => r.json())
             .then(data => {
                 setBranches(data);
-                const defaultBranch = data.find(b => b.isDefault);
-                if (data.length > 0 && !defaultBranch) {
-                    setSelectedBranch(data[0].name);
-                } else if (data.length > 1) {
-                    // Pre-select a non-default branch
+                if (data.length > 0) {
                     const nonDefault = data.find(b => !b.isDefault);
-                    if (nonDefault) setSelectedBranch(nonDefault.name);
+                    setSelectedBranch(nonDefault ? nonDefault.name : data[0].name);
                 }
             })
             .catch(console.error);
@@ -121,9 +117,9 @@ const Audits = () => {
                             onChange={e => setSelectedBranch(e.target.value)}
                             className="bg-transparent border-none outline-none px-4 py-2 text-sm text-slate-700 dark:text-slate-200 appearance-none pr-8 cursor-pointer"
                         >
-                            <option value="" disabled>Select a branch</option>
+                            <option value="" disabled className="bg-white dark:bg-slate-900 text-slate-500">Select a branch</option>
                             {branches.map(b => (
-                                <option key={b.name} value={b.name} disabled={b.isDefault}>
+                                <option key={b.name} value={b.name} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
                                     {b.name} {b.isDefault ? '(Default)' : ''}
                                 </option>
                             ))}

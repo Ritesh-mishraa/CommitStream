@@ -121,10 +121,10 @@ const RepoStatusPanel = ({ project, stats, setActiveProject }) => {
                             ${status === 'Archived' ? 'border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800' : ''}
                         `}
                     >
-                        <option value="Planning">Planning</option>
-                        <option value="Active">Active</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Archived">Archived</option>
+                        <option value="Planning" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">Planning</option>
+                        <option value="Active" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">Active</option>
+                        <option value="Completed" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">Completed</option>
+                        <option value="Archived" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">Archived</option>
                     </select>
                 </div>
             </div>
