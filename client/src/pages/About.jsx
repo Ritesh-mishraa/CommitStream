@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Shield, Target, Zap, Github, Linkedin, Mail, Code2, Users, LayoutDashboard, Database, Cpu } from 'lucide-react';
+import Footer from '../components/home/Footer';
 
 const About = () => {
     const fadeIn = {
@@ -156,6 +157,10 @@ const About = () => {
                         ))}
                     </div>
                 </motion.div>
+            </div>
+            
+            <div className="mt-20">
+                <Footer />
             </div>
         </div>
     );
