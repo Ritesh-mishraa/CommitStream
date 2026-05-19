@@ -18,4 +18,17 @@
   body {
     @apply bg-slate-50 text-slate-600 dark:bg-slate-950 dark:text-slate-400 font-sans antialiased m-0 p-0;
   }
+  
+  .dark {
+    /* GitHub-inspired dark theme globally */
+    --color-slate-950: #0d1117;
+    --color-slate-900: #161b22;
+    --color-slate-800: #21262d;
+    --color-slate-700: #30363d;
+    --color-slate-600: #484f58;
+    --color-slate-500: #6e7681;
+    --color-slate-400: #8b949e;
+    --color-slate-300: #c9d1d9;
+    --color-slate-200: #f0f6fc;
+  }
 }
