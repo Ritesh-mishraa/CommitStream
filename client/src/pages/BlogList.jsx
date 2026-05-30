@@ -27,7 +27,8 @@ const BlogList = () => {
         setLoading(true);
         setError(null);
         try {
-            const url = new URL(`${API_BASE}/blogs`);
+            const baseUrl = API_BASE.startsWith('http') ? API_BASE : `${window.location.origin}${API_BASE}`;
+            const url = new URL(`${baseUrl}/blogs`);
             url.searchParams.append('page', currentPage.toString());
             url.searchParams.append('limit', '24');
             if (selectedCategory && selectedCategory !== 'All') {
