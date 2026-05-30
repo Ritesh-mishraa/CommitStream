@@ -144,3 +144,82 @@ Constraints:
         throw new Error('Failed to generate AI explanation');
     }
 };
+
+// Rewrite scraped tech news into an SEO-optimized blog post using Gemini
+export const generateBlogWithAI = async (scrapedTitle, scrapedSummary, categoryName) => {
+    try {
+        const prompt = `You are a Principal Tech Journalist, SEO expert, and Technical Blogger.
+Your task is to rewrite, expand, and customize the following scraped tech news article into an extremely engaging, search-engine-optimized, and premium blog post for the CommitStream platform.
+
+Here are the details of the scraped article:
+- Scraped Title: ${scrapedTitle}
+- Scraped Summary/Content: ${scrapedSummary}
+- Target Category: ${categoryName}
+
+Your blog post must meet these strict criteria:
+1. TITLE: Create an optimized, catchy, and click-worthy title related to the article. It should be highly search-engine optimized (contains relevant keywords).
+2. CONTENT: Write a comprehensive, high-quality, and deeply insightful blog article (approx 400-600 words) in valid Markdown.
+   - It should discuss technical implications, impact on developer workflow, industry context, or future outlook.
+   - Use beautiful Markdown formatting: headers (H2, H3), bold text, lists, and code snippets if applicable.
+   - Integrate relevant search keywords naturally within the text.
+3. SEO SUMMARY / META DESCRIPTION: A compelling, action-oriented description under 155 characters that will make search engine users click.
+4. METRICS / KEYWORDS: Create a comma-separated list of 5-8 SEO keywords for search indexers.
+5. TAGS: Choose 3-4 relevant tags (e.g. ["GitHub", "AI", "React", "Next.js", "Web Dev", "Careers", "Machine Learning"]).
+6. HIGH IMPACT IDENTIFICATION: Identify if the news is highly important, such as a major layoff/job cutting event, a revolutionary tech breakthrough (e.g., AGI, GPT-5, superconductor), or a major GitHub/developer update.
+   - If yes, set "isHighImpact" to true, and "impactLabel" to a short text (e.g. "Layoffs", "Revolutionary Tech", "Major Update").
+   - If no, set "isHighImpact" to false, and "impactLabel" to "".
+
+You MUST respond with a strict JSON object with this exact structure:
+{
+  "title": "Optimized and Engaging Headline",
+  "content": "Full markdown-formatted blog post body...",
+  "summary": "Catchy 1-2 sentence hook...",
+  "metaTitle": "SEO optimized title tag (under 60 characters)",
+  "metaDescription": "Highly compelling search snippet (under 155 characters)",
+  "keywords": "keyword1, keyword2, keyword3, ...",
+  "tags": ["Tag1", "Tag2", "Tag3"],
+  "category": "GitHub" | "AI Industry" | "Job Market" | "General Tech",
+  "isHighImpact": true | false,
+  "impactLabel": "Layoffs" | "Revolutionary Tech" | "Major Update" | ""
+}
+
+Ensure the "category" is EXACTLY one of the four options: "GitHub", "AI Industry", "Job Market", "General Tech".
+IMPORTANT: Return ONLY the raw JSON object. Do not wrap it in markdown code block formatting (like \`\`\`json). Do not add any extra text or conversational explanations.`;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+
+        let jsonText = response.text || '';
+        if (jsonText.startsWith('\`\`\`')) {
+            const firstNewline = jsonText.indexOf('\n');
+            const lastTripleR = jsonText.lastIndexOf('\`\`\`');
+            if (firstNewline !== -1 && lastTripleR !== -1 && lastTripleR > firstNewline) {
+                jsonText = jsonText.substring(firstNewline + 1, lastTripleR);
+            }
+        }
+
+        try {
+            return JSON.parse(jsonText.trim());
+        } catch (e) {
+            console.error("Failed to parse Gemini blog JSON, raw response:", jsonText);
+            // Fallback object in case JSON parsing fails
+            return {
+                title: scrapedTitle,
+                content: `### ${scrapedTitle}\n\n${scrapedSummary}\n\n*Note: This article was generated as a fallback due to processing constraints.*`,
+                summary: scrapedSummary.substring(0, 150) + "...",
+                metaTitle: scrapedTitle.substring(0, 60),
+                metaDescription: scrapedSummary.substring(0, 150),
+                keywords: "tech, github, ai, developers",
+                tags: ["Tech"],
+                category: categoryName,
+                isHighImpact: false,
+                impactLabel: ""
+            };
+        }
+    } catch (error) {
+        console.error("AI Blog Generator Service Failed:", error);
+        throw new Error('Failed to generate AI blog post');
+    }
+};

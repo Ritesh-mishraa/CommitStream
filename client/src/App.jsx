@@ -9,6 +9,8 @@ import Auth from './pages/Auth';
 import AuthCallback from './pages/AuthCallback';
 import Home from './pages/Home';
 import About from './pages/About';
+import BlogList from './pages/BlogList';
+import BlogPost from './pages/BlogPost';
 import Profile from './pages/Profile';
 import Tasks from './pages/Tasks';
 import Audits from './pages/Audits';
@@ -33,6 +35,8 @@ function App() {
                     }>
                         <Route path="/" element={<Home />} />
                         <Route path="/about" element={<About />} />
+                        <Route path="/blog" element={<BlogList />} />
+                        <Route path="/blog/:slug" element={<BlogPost />} />
                     </Route>
 
                     {/* Standalone Auth & Verification */}

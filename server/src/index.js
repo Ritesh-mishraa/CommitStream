@@ -19,12 +19,17 @@ import tasksRouter from './routes/tasks.js';
 import auditsRouter from './routes/audits.js';
 import insightsRouter from './routes/insights.js';
 import messagesRouter from './routes/messages.js';
+import blogsRouter from './routes/blogs.js';
 import { setupSwagger } from './config/swagger.js';
+import { startScheduler } from './utils/scheduler.js';
+import { migrateOldBlogImages } from './utils/scraperService.js';
 
 dotenv.config();
 
-// Initialize DB Connection
-connectDB();
+// Initialize DB Connection and run migrations
+connectDB().then(() => {
+    migrateOldBlogImages();
+});
 
 const app = express();
 const server = createServer(app);
@@ -65,6 +70,7 @@ app.use('/api/tasks', tasksRouter);
 app.use('/api/audits', auditsRouter);
 app.use('/api/insights', insightsRouter);
 app.use('/api/messages', messagesRouter);
+app.use('/api/blogs', blogsRouter);
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', time: new Date().toISOString() });
@@ -82,6 +88,9 @@ if (process.env.NODE_ENV === 'production') {
 
 // Setup socket events
 import('./socket/index.js');
+
+// Start blog automated scheduler
+startScheduler();
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
