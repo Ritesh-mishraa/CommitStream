@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Search, Calendar, Tag, ArrowRight, RefreshCw, AlertCircle, Clock, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SEO from '../components/SEO';
+import Footer from '../components/home/Footer';
 
 const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
 
@@ -100,14 +101,14 @@ const BlogList = () => {
     const listBlogs = featuredPost ? blogs.slice(1) : blogs;
 
     return (
-        <div className="min-h-screen pt-28 pb-12 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200">
+        <div className="min-h-screen pt-28 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 flex flex-col">
             <SEO 
                 title="Tech Insights Blog"
                 description="Stay updated with the latest in technology, GitHub innovations, AI advancements, and developers job market trends compiled by our intelligence compiler."
                 keywords="tech blog, github news, ai trends, software engineer jobs, technology news, commitstream insights"
             />
 
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-1 pb-16">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
                     <div>
@@ -380,6 +381,7 @@ const BlogList = () => {
                     </>
                 )}
             </div>
+            <Footer />
         </div>
     );
 };

@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Calendar, Clock, ArrowLeft, Share2, Twitter, Linkedin, Link2, ExternalLink, Tag, AlertCircle } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
+import Footer from '../components/home/Footer';
 
 const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
 
@@ -186,7 +187,7 @@ const BlogPost = () => {
     };
 
     return (
-        <div className="min-h-screen pt-28 pb-12 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200">
+        <div className="min-h-screen pt-28 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 flex flex-col">
             {/* Dynamic SEO tags */}
             <Helmet>
                 <title>{blog.metaTitle ? `${blog.metaTitle} | CommitStream` : `${blog.title} | CommitStream`}</title>
@@ -214,7 +215,7 @@ const BlogPost = () => {
                 </script>
             </Helmet>
 
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex-1 pb-16">
                 {/* Back button */}
                 <Link to="/blog" className="inline-flex items-center gap-2 text-slate-500 hover:text-blue-500 font-semibold text-sm mb-8 transition-colors group">
                     <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
@@ -357,6 +358,7 @@ const BlogPost = () => {
                     </div>
                 )}
             </div>
+            <Footer />
         </div>
     );
 };

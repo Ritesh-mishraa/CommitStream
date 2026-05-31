@@ -86,36 +86,54 @@ const IMAGE_POOLS = {
     'GitHub': [
         '1618401471353-b98afee0b2eb', '1607799279861-4dd421887fb3', 
         '1555066931-4365d14bab8c', '1629654297299-c8506221ca97', 
-        '1542831371-29b0f74f9713'
+        '1542831371-29b0f74f9713', '1517694712202-14dd9538aa97',
+        '1526374965328-7f61d4dc18c5', '1531403009284-440f080d1e12',
+        '1580894732444-8febeb78657f', '1552664730-d307ca884978'
     ],
     'AI Industry': [
         '1677442136019-21780ecad995', '1618005182384-a83a8bd57fbe', 
         '1581091226825-a6a2a5aee158', '1526374965328-7f61d4dc18c5', 
-        '1684369175833-2a8d11c79808'
+        '1684369175833-2a8d11c79808', '1507146426996-ef05306b995a',
+        '1485827404703-89b55fcc595e', '1620712943543-bcc4688e7485',
+        '1617791160536-598cf32026fb', '1531747118685-ca8fa6e08806'
     ],
     'Job Market': [
         '1486406146926-c627a92ad1ab', '1507679799987-c73779587ccf', 
         '1434030216411-0b793f4b4173', '1521791136368-1a9b79758550', 
-        '1427504494785-3a9ca7044f45'
+        '1427504494785-3a9ca7044f45', '1497366216548-37526070297c',
+        '1522071820081-009f0129c71c', '1454165804606-c3d57bc86b40',
+        '1519389950473-47ba0277781c', '1552581230-c115979f5086'
     ],
     'General Tech': [
         '1518770660439-4636190af475', '1451187580459-43490279c0fa', 
         '1519389950473-47ba0277781c', '1498050108023-c5249f4df085', 
-        '1550751827-4bd374c3f58b'
+        '1550751827-4bd374c3f58b', '1588702547919-2a08b310721f',
+        '1531297484001-80022131f5a1', '1562408590-e32931084e23',
+        '1535378917042-10a22c95931a', '1607604276583-eef5d076aa5f'
     ],
     'Layoffs': [
         '1507679799987-c73779587ccf', '1542744173-05336fcc7ad4', 
-        '1522071820081-009f0129c71c', '1515378791036-0648a3ef77b2'
+        '1522071820081-009f0129c71c', '1515378791036-0648a3ef77b2',
+        '1421996522046-2603e43a99f7', '1507207611509-ec012433ff52',
+        '1479064555547-f7227ff52144', '1584438784854-087e5679d86c'
     ]
 };
 
-const getRandomImage = (category, impactLabel) => {
+// Returns a deterministic image from the pool based on a hash of the blog title
+const getRandomImage = (category, impactLabel, title = '') => {
     let pool = IMAGE_POOLS[category] || IMAGE_POOLS['General Tech'];
     if (impactLabel && impactLabel.toLowerCase().includes('layoff')) {
         pool = IMAGE_POOLS['Layoffs'];
     }
-    const randomIndex = Math.floor(Math.random() * pool.length);
-    const photoId = pool[randomIndex];
+    
+    // Hash function to map title/slug to a stable index in the pool
+    let hash = 0;
+    const str = title || category || '';
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % pool.length;
+    const photoId = pool[index];
     return `https://images.unsplash.com/photo-${photoId}?w=800&auto=format&fit=crop&q=80`;
 };
 
@@ -188,7 +206,7 @@ export const runBlogScraperPipeline = async () => {
                 tags: aiBlog.tags || [source.category],
                 sourceUrl: selectedItem.link,
                 sourceName: source.sourceName,
-                imageUrl: getRandomImage(aiBlog.category || source.category, aiBlog.impactLabel),
+                imageUrl: getRandomImage(aiBlog.category || source.category, aiBlog.impactLabel, aiBlog.title || selectedItem.title),
                 publishDate: selectedItem.pubDate ? new Date(selectedItem.pubDate) : new Date(),
                 metaTitle: aiBlog.metaTitle || aiBlog.title,
                 metaDescription: aiBlog.metaDescription || aiBlog.summary,
@@ -209,31 +227,25 @@ export const runBlogScraperPipeline = async () => {
     return createdBlogs;
 };
 
-// Update existing blog posts in DB that have legacy/duplicate images
+// Update existing blog posts in DB to have diverse, deterministic images
 export const migrateOldBlogImages = async () => {
     try {
         const blogs = await Blog.find();
-        console.log(`Database Migration: Checking ${blogs.length} blogs for legacy/broken image URLs...`);
+        console.log(`Database Migration: Distributing unique images for all ${blogs.length} blogs...`);
         let updatedCount = 0;
 
         for (const blog of blogs) {
-            const isLegacy = !blog.imageUrl || 
-                             blog.imageUrl.includes('1618401471353-b98aedd07871') || 
-                             blog.imageUrl.includes('1677442136019-21780efad99a') ||
-                             blog.imageUrl.includes('undefined');
+            // Assign deterministic unique image based on title/category
+            const targetImage = getRandomImage(blog.category, blog.impactLabel, blog.title);
 
-            if (isLegacy) {
-                blog.imageUrl = getRandomImage(blog.category, blog.impactLabel);
+            if (blog.imageUrl !== targetImage) {
+                blog.imageUrl = targetImage;
                 await blog.save();
                 updatedCount++;
             }
         }
 
-        if (updatedCount > 0) {
-            console.log(`Database Migration: Successfully migrated ${updatedCount} legacy blog images to diverse and active URLs.`);
-        } else {
-            console.log("Database Migration: All blog image URLs are up to date.");
-        }
+        console.log(`Database Migration: Completed. Updated ${updatedCount} blog image URLs.`);
     } catch (error) {
         console.error("Database Migration Failed:", error.message);
     }
