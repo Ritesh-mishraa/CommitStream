@@ -179,7 +179,13 @@ router.post('/resolve-file', authMiddleware, async (req, res) => {
         const pat = user?.githubAccessToken || user?.githubPat || null;
 
         // Fetch the raw diff from GitHub API
-        const compareData = await compareBranches(project.githubRepo, branchIdA, branchIdB, pat);
+        let compareData;
+        try {
+            compareData = await compareBranches(project.githubRepo, branchIdA, branchIdB, pat);
+        } catch (compareError) {
+            console.error("GitHub compare failed in resolve-file route:", compareError.message);
+            return res.status(400).json({ message: "Failed to compare branches on GitHub. Verify the branches exist and your access token is valid." });
+        }
 
         // Find the specific file patch
         const fileDiff = compareData.files?.find(f => f.filename === filename);
@@ -188,7 +194,7 @@ router.post('/resolve-file', authMiddleware, async (req, res) => {
         }
 
         // Call the Gemini service
-        const resolvedCode = await resolveConflictWithAI(filename, fileDiff.patch);
+        const resolvedCode = await resolveConflictWithAI(filename, fileDiff.patch, projectId);
 
         res.json({
             filename,
@@ -286,7 +292,7 @@ router.post('/file-content', authMiddleware, async (req, res) => {
  */
 router.post('/explain', authMiddleware, async (req, res) => {
     try {
-        const { selectedCode, contextCode, branchName } = req.body;
+        const { selectedCode, contextCode, branchName, projectId } = req.body;
 
         if (!selectedCode) {
             return res.status(400).json({ message: 'Missing selected codebase string' });
@@ -295,7 +301,8 @@ router.post('/explain', authMiddleware, async (req, res) => {
         const explanation = await explainSnippetWithAI(
             selectedCode, 
             contextCode || 'No context provided', 
-            branchName || 'Unknown branch'
+            branchName || 'Unknown branch',
+            projectId || null
         );
         
         res.json({ explanation });

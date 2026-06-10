@@ -20,11 +20,17 @@ import auditsRouter from './routes/audits.js';
 import insightsRouter from './routes/insights.js';
 import messagesRouter from './routes/messages.js';
 import blogsRouter from './routes/blogs.js';
+import ragRouter from './routes/rag.js';
 import { setupSwagger } from './config/swagger.js';
 import { startScheduler } from './utils/scheduler.js';
 import { migrateOldBlogImages } from './utils/scraperService.js';
 
 dotenv.config();
+
+if (process.env.NODE_ENV !== 'production') {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+    console.log('[Dev mode] Bypassing native TLS verification (NODE_TLS_REJECT_UNAUTHORIZED=0) to resolve proxy issues.');
+}
 
 // Initialize DB Connection and run migrations
 connectDB().then(() => {
@@ -71,6 +77,17 @@ app.use('/api/audits', auditsRouter);
 app.use('/api/insights', insightsRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/blogs', blogsRouter);
+app.use('/api/rag', ragRouter);
+
+// Global error handling middleware
+app.use((err, req, res, next) => {
+    console.error('[Global Error Handler]', err.stack || err);
+    res.status(500).json({
+        error: 'Internal Server Error',
+        message: err.message,
+        stack: process.env.NODE_ENV === 'production' ? undefined : err.stack
+    });
+});
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', time: new Date().toISOString() });

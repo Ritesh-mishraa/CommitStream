@@ -278,3 +278,29 @@ export const fetchCommitDetails = async (repo, commitSha, pat = null) => {
         throw error;
     }
 };
+
+/**
+ * Fetch all files recursively from a specific branch of a GitHub repository
+ * @param {string} repo - Format "owner/repo"
+ * @param {string} branch - The branch name
+ * @param {string} pat - Optional Personal Access Token
+ */
+export const fetchRepoTreeRecursive = async (repo, branch, pat = null) => {
+    try {
+        const client = getGithubClient(pat);
+        
+        // Fetch the branch details to get the commit SHA
+        const branchRes = await client.get(`/repos/${repo}/branches/${encodeURIComponent(branch)}`);
+        const commitSha = branchRes.data.commit.sha;
+
+        // Fetch the recursive tree
+        const treeRes = await client.get(`/repos/${repo}/git/trees/${commitSha}?recursive=1`);
+        
+        // Return only blob entries (actual files)
+        return treeRes.data.tree.filter(item => item.type === 'blob');
+    } catch (error) {
+        console.error(`Failed to fetch recursive tree for ${repo} branch ${branch}:`, error.message);
+        throw error;
+    }
+};
+

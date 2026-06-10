@@ -1,5 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
+import { getRelevantContext } from './ragService.js';
 dotenv.config();
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -10,8 +11,20 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
  * @param {string} filename - The name of the file being resolved
  * @param {string} patch - The diff data for the file
  */
-export const resolveConflictWithAI = async (filename, patch) => {
+export const resolveConflictWithAI = async (filename, patch, projectId = null) => {
     try {
+        let contextText = '';
+        if (projectId) {
+            try {
+                const chunks = await getRelevantContext(projectId, `File: ${filename}\nConflict:\n${patch.substring(0, 500)}`, 3);
+                if (chunks && chunks.length > 0) {
+                    contextText = `\n\nReference Context from Codebase (to help resolve imports, APIs, and conventions correctly):\n${chunks.map(c => `[File: ${c.metadata.filename}]\n${c.pageContent}`).join('\n---\n')}`;
+                }
+            } catch (ragError) {
+                console.error("RAG retrieval failed for resolveConflictWithAI, falling back to standard prompt:", ragError.message);
+            }
+        }
+
         const prompt = `You are an autonomous Principal Full-Stack Engineer working on CommitStream.
 Your task is to cleanly resolve the git diff provided below.
 The file being modified is: ${filename}
@@ -20,6 +33,7 @@ Here is the raw git diff / patch containing the conflicts:
 \`\`\`diff
 ${patch}
 \`\`\`
+${contextText}
 
 Analyze the changes. Your objective is to merge these changes intelligently, preserving the intent of both branches while fixing any structural collisions.
 IMPORTANT: Return ONLY the final, clean, and resolved code for the entire file. DO NOT wrap your response in markdown formatting block quotes (e.g., \`\`\`javascript).
@@ -52,8 +66,20 @@ DO NOT include any explanations or conversational text. Output ONLY the raw func
  * @param {string} diffText - The raw git diff containing changes
  * @returns {Promise<Array>} - Array of found issues
  */
-export const auditCodeWithAI = async (diffText) => {
+export const auditCodeWithAI = async (diffText, projectId = null) => {
     try {
+        let contextText = '';
+        if (projectId) {
+            try {
+                const chunks = await getRelevantContext(projectId, `Audit diff code style standards: ${diffText.substring(0, 500)}`, 3);
+                if (chunks && chunks.length > 0) {
+                    contextText = `\n\nReference Context from Codebase (for code standards / api reference):\n${chunks.map(c => `[File: ${c.metadata.filename}]\n${c.pageContent}`).join('\n---\n')}`;
+                }
+            } catch (ragError) {
+                console.error("RAG retrieval failed for auditCodeWithAI, falling back to standard prompt:", ragError.message);
+            }
+        }
+
         const prompt = `You are a Principal Application Security Engineer and Senior Staff Software Engineer reviewing a pull request diff.
 Your task is to analyze the following git diff and identify any security vulnerabilities, code smells, logical errors, or major optimization opportunities.
 
@@ -61,6 +87,7 @@ Here is the diff:
 \`\`\`diff
 ${diffText.substring(0, 30000)}
 \`\`\`
+${contextText}
 
 Analyze the changes. Return a strict JSON array containing objects with the following schema:
 [
@@ -113,8 +140,20 @@ IMPORTANT:
  * @param {string} branchName - The identifier of the branch owning the selection
  * @returns {Promise<string>} - A 3-4 sentence explanation
  */
-export const explainSnippetWithAI = async (selectedCode, contextCode, branchName) => {
+export const explainSnippetWithAI = async (selectedCode, contextCode, branchName, projectId = null) => {
     try {
+        let contextText = '';
+        if (projectId) {
+            try {
+                const chunks = await getRelevantContext(projectId, `Code snippet explain context:\n${selectedCode}`, 3);
+                if (chunks && chunks.length > 0) {
+                    contextText = `\n\nReference Context from Codebase:\n${chunks.map(c => `[File: ${c.metadata.filename}]\n${c.pageContent}`).join('\n---\n')}`;
+                }
+            } catch (ragError) {
+                console.error("RAG retrieval failed for explainSnippetWithAI, falling back to standard prompt:", ragError.message);
+            }
+        }
+
         const prompt = `You are a Principal Software Engineer explaining a Git merge conflict to another developer.
 The user highlighted the following conflicting code block from branch '${branchName}':
 \`\`\`
@@ -125,6 +164,7 @@ Here is the surrounding file context for reference (Do not explain the entire fi
 \`\`\`
 ${contextCode}
 \`\`\`
+${contextText}
 
 Explain technically why this specific block is colliding or what changed here.
 Constraints:

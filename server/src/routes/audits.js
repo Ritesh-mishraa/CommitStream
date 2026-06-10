@@ -46,7 +46,13 @@ router.post('/scan', authMiddleware, async (req, res) => {
         const pat = user?.githubAccessToken || user?.githubPat || null;
 
         // Fetch repo details to determine the default branch
-        const repoDetails = await fetchRepoDetails(project.githubRepo, pat);
+        let repoDetails;
+        try {
+            repoDetails = await fetchRepoDetails(project.githubRepo, pat);
+        } catch (repoError) {
+            console.error("Failed to fetch GitHub repo details:", repoError.message);
+            return res.status(400).json({ message: "Failed to fetch repository details from GitHub. Ensure your GitHub access token is valid and the repository exists." });
+        }
         const defaultBranch = repoDetails.default_branch || 'main';
 
         // Compare the target branch against the default branch
@@ -78,7 +84,7 @@ router.post('/scan', authMiddleware, async (req, res) => {
         }
 
         // Submit the diff to Gemini
-        const auditResults = await auditCodeWithAI(aggregatedDiff);
+        const auditResults = await auditCodeWithAI(aggregatedDiff, projectId);
 
         res.json(auditResults);
     } catch (error) {
