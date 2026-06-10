@@ -1,6 +1,6 @@
 import { useAuth } from '../context/AuthContext';
-import { Navigate, useLocation } from 'react-router-dom';
-import { GitMerge, Loader2, Github } from 'lucide-react';
+import { Navigate, useLocation, Link } from 'react-router-dom';
+import { GitMerge, Loader2, Github, ArrowLeft } from 'lucide-react';
 
 const Auth = () => {
     const { user, isLoading } = useAuth();
@@ -21,7 +21,14 @@ const Auth = () => {
             </div>
 
             <div className="w-full max-w-md bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-3xl p-10 shadow-2xl relative z-10 font-sans">
-                <div className="flex flex-col items-center mb-10">
+                <Link 
+                    to="/" 
+                    className="absolute top-6 left-6 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 flex items-center gap-1.5 transition-colors group"
+                >
+                    <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+                    Back to Home
+                </Link>
+                <div className="flex flex-col items-center mb-10 mt-4">
                     <div className="w-16 h-16 bg-blue-50 dark:bg-blue-500/10 rounded-2xl flex items-center justify-center border border-blue-100 dark:border-blue-500/20 mb-6 shadow-sm">
                         <GitMerge className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                     </div>

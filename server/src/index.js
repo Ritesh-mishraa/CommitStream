@@ -82,9 +82,13 @@ app.use('/api/rag', ragRouter);
 // Global error handling middleware
 app.use((err, req, res, next) => {
     console.error('[Global Error Handler]', err.stack || err);
+    if (err.oauthError) {
+        console.error('[OAuth Details]', err.oauthError);
+    }
     res.status(500).json({
         error: 'Internal Server Error',
         message: err.message,
+        oauthError: err.oauthError || undefined,
         stack: process.env.NODE_ENV === 'production' ? undefined : err.stack
     });
 });

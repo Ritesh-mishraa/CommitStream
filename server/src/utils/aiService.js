@@ -5,6 +5,24 @@ dotenv.config();
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+// Retry logic wrapper with exponential backoff for transient 503/429 errors
+const generateContentWithRetry = async (params, retries = 3, delay = 1000) => {
+    for (let i = 0; i < retries; i++) {
+        try {
+            return await ai.models.generateContent(params);
+        } catch (error) {
+            const isTransient = error.status === 429 || error.status === 503 || error.status === 500 || error.message?.includes('demand') || error.message?.includes('Spikes');
+            if (isTransient && i < retries - 1) {
+                console.warn(`[AI Service] Gemini call failed (${error.message || error.status}). Retrying in ${delay}ms... (Attempt ${i + 1}/${retries})`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                delay *= 2;
+                continue;
+            }
+            throw error;
+        }
+    }
+};
+
 /**
  * Feeds the raw git patch (containing merge conflict markers or diffs) to Gemini
  * and returns a cleanly resolved file string.
@@ -39,7 +57,7 @@ Analyze the changes. Your objective is to merge these changes intelligently, pre
 IMPORTANT: Return ONLY the final, clean, and resolved code for the entire file. DO NOT wrap your response in markdown formatting block quotes (e.g., \`\`\`javascript).
 DO NOT include any explanations or conversational text. Output ONLY the raw functional code.`;
 
-        const response = await ai.models.generateContent({
+        const response = await generateContentWithRetry({
             model: 'gemini-2.5-flash',
             contents: prompt,
         });
@@ -107,7 +125,7 @@ IMPORTANT:
 - If no significant issues are found, return an empty array [].
 - Be highly critical but pragmatic. Do not flag trivial style issues unless they are severe.`;
 
-        const response = await ai.models.generateContent({
+        const response = await generateContentWithRetry({
             model: 'gemini-2.5-flash',
             contents: prompt,
         });
@@ -173,7 +191,7 @@ Constraints:
 - Do NOT use conversational fluff. Be highly technical, direct, and deterministic.
 - Do NOT output markdown code blocks. Just the raw text explanation.`;
 
-        const response = await ai.models.generateContent({
+        const response = await generateContentWithRetry({
             model: 'gemini-2.5-flash',
             contents: prompt,
         });
@@ -226,7 +244,7 @@ You MUST respond with a strict JSON object with this exact structure:
 Ensure the "category" is EXACTLY one of the four options: "GitHub", "AI Industry", "Job Market", "General Tech".
 IMPORTANT: Return ONLY the raw JSON object. Do not wrap it in markdown code block formatting (like \`\`\`json). Do not add any extra text or conversational explanations.`;
 
-        const response = await ai.models.generateContent({
+        const response = await generateContentWithRetry({
             model: 'gemini-2.5-flash',
             contents: prompt,
         });
