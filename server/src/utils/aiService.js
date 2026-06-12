@@ -1,22 +1,56 @@
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
 import { getRelevantContext } from './ragService.js';
+import Project from '../models/Project.js';
+import { fetchRepoDetails, compareBranches, fetchRepoStats, fetchRepoCollaborators, getGithubClient } from './githubService.js';
 dotenv.config();
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// Retry logic wrapper with exponential backoff for transient 503/429 errors
-const generateContentWithRetry = async (params, retries = 3, delay = 1000) => {
+// Models list to cycle/fallback to if a model experiences high-demand or rate-limiting (503/429)
+const BASE_FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash', 'gemini-flash-latest', 'gemini-pro-latest'];
+
+// Retry logic wrapper with exponential backoff and model shifting fallbacks
+const generateContentWithRetry = async (params, retries = 5, delay = 2000) => {
+    const modelsList = [...BASE_FALLBACK_MODELS];
+    const initialModel = params.model || 'gemini-2.5-flash';
+    let modelIndex = modelsList.indexOf(initialModel);
+    if (modelIndex === -1) {
+        modelsList.unshift(initialModel);
+        modelIndex = 0;
+    }
+
     for (let i = 0; i < retries; i++) {
+        const currentModel = modelsList[modelIndex];
+        const currentParams = { ...params, model: currentModel };
+        
         try {
-            return await ai.models.generateContent(params);
+            return await ai.models.generateContent(currentParams);
         } catch (error) {
-            const isTransient = error.status === 429 || error.status === 503 || error.status === 500 || error.message?.includes('demand') || error.message?.includes('Spikes');
-            if (isTransient && i < retries - 1) {
-                console.warn(`[AI Service] Gemini call failed (${error.message || error.status}). Retrying in ${delay}ms... (Attempt ${i + 1}/${retries})`);
-                await new Promise(resolve => setTimeout(resolve, delay));
-                delay *= 2;
-                continue;
+            const isTransient = 
+                error.status === 429 || 
+                error.status === 503 || 
+                error.status === 500 || 
+                error.message?.includes('demand') || 
+                error.message?.includes('Spikes') || 
+                error.message?.includes('quota') || 
+                error.message?.includes('fetch failed') ||
+                error.code === 'UND_ERR_HEADERS_TIMEOUT' ||
+                error.cause?.code === 'UND_ERR_HEADERS_TIMEOUT' ||
+                error.message?.includes('Timeout');
+            
+            if (isTransient) {
+                const nextModelIndex = (modelIndex + 1) % modelsList.length;
+                const nextModel = modelsList[nextModelIndex];
+                
+                console.warn(`[AI Service] Model "${currentModel}" failed (${error.message || error.status || error.code}). Shifting to "${nextModel}" for next attempt...`);
+                modelIndex = nextModelIndex;
+                
+                if (i < retries - 1) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 1.5;
+                    continue;
+                }
             }
             throw error;
         }
@@ -279,5 +313,171 @@ IMPORTANT: Return ONLY the raw JSON object. Do not wrap it in markdown code bloc
     } catch (error) {
         console.error("AI Blog Generator Service Failed:", error);
         throw new Error('Failed to generate AI blog post');
+    }
+};
+
+/**
+ * Chat with the codebase assistant using RAG context retrieval and branch diff analysis.
+ * Supports three modes: general (no context), codebase (RAG on default branch), and branch (RAG + branch diff).
+ */
+export const chatWithRepositoryAI = async (projectId, query, history = [], options = {}) => {
+    try {
+        const { mode = 'codebase', branch: branchName = null, pat = null } = options;
+        
+        let contextText = '';
+        let branchDiffContext = '';
+        let repoMetadata = null;
+
+        // 1. Fetch Codebase RAG context if in codebase or branch mode
+        if (mode === 'codebase' || mode === 'branch') {
+            try {
+                const chunks = await getRelevantContext(projectId, query, 5);
+                if (chunks && chunks.length > 0) {
+                    contextText = chunks.map((c, idx) => `[Snippet #${idx + 1} - File: ${c.metadata.filename}]\n${c.pageContent}`).join('\n---\n');
+                } else {
+                    contextText = 'No specific code snippets found for this query in the vector store.';
+                }
+            } catch (ragError) {
+                console.error("[AI Service] RAG retrieval failed for chat:", ragError.message);
+                contextText = 'RAG search was unavailable due to an error.';
+            }
+        }
+
+        // 2. Fetch active branch diff if in branch mode
+        if (mode === 'branch' && branchName) {
+            try {
+                const project = await Project.findById(projectId);
+                if (project && project.githubRepo) {
+                    const repo = project.githubRepo;
+                    let defaultBranch = 'main';
+                    try {
+                        const repoDetails = await fetchRepoDetails(repo, pat);
+                        defaultBranch = repoDetails.default_branch || 'main';
+                    } catch (e) {
+                        console.warn("[AI Service] Failed to fetch repo details, defaulting to 'main':", e.message);
+                    }
+                    
+                    console.log(`[AI Chat] Comparing default branch "${defaultBranch}" with HEAD branch "${branchName}" for repo "${repo}"...`);
+                    const compareData = await compareBranches(repo, defaultBranch, branchName, pat);
+                    
+                    if (compareData && compareData.files && compareData.files.length > 0) {
+                        const filesList = compareData.files.map(f => `- ${f.filename} (${f.status})`).join('\n');
+                        
+                        let diffPatches = '';
+                        let patchCount = 0;
+                        for (const file of compareData.files) {
+                            if (file.patch && patchCount < 3) {
+                                diffPatches += `\n--- a/${file.filename}\n+++ b/${file.filename}\n${file.patch.substring(0, 3000)}\n`;
+                                patchCount++;
+                            }
+                        }
+                        
+                        branchDiffContext = `Active Focus Branch: "${branchName}"\nFiles Modified in this branch (compared to "${defaultBranch}"):\n${filesList}\n\nKey Code Differences in this branch:\n${diffPatches || 'No text-based code diffs available.'}`;
+                    } else {
+                        branchDiffContext = `Active Focus Branch: "${branchName}"\nNo file differences found compared to the default branch "${defaultBranch}".`;
+                    }
+                }
+            } catch (err) {
+                console.error("[AI Service] Branch comparison failed for chat:", err.message);
+                branchDiffContext = `Active Focus Branch: "${branchName}"\nCould not retrieve branch differences: ${err.message}`;
+            }
+        }
+
+        // 3. Fetch general repo metadata (stars, commits count, forks, open issues, contributors, etc.)
+        try {
+            const project = await Project.findById(projectId);
+            if (project && project.githubRepo) {
+                const repo = project.githubRepo;
+                const client = getGithubClient(pat);
+                const [detailsRes, stats, contributors] = await Promise.all([
+                    fetchRepoDetails(repo, pat).catch(() => null),
+                    fetchRepoStats(repo, pat).catch(() => null),
+                    fetchRepoCollaborators(repo, pat).catch(() => null)
+                ]);
+                
+                // Fetch total commits count resiliently
+                let totalCommits = 0;
+                try {
+                    const commitsCountRes = await client.get(`/repos/${repo}/commits?per_page=1`);
+                    const linkHeader = commitsCountRes.headers.link;
+                    if (linkHeader) {
+                        const match = linkHeader.match(/&page=(\d+)>;\s*rel="last"/);
+                        if (match) {
+                            totalCommits = parseInt(match[1], 10);
+                        } else {
+                            totalCommits = commitsCountRes.data.length;
+                        }
+                    } else {
+                        totalCommits = commitsCountRes.data.length;
+                    }
+                } catch (err) {
+                    console.warn("[AI Service] Failed to fetch total commits count:", err.message);
+                }
+
+                repoMetadata = {
+                    name: repo,
+                    description: detailsRes?.description || 'No description provided.',
+                    stars: detailsRes?.stargazers_count || 0,
+                    forks: detailsRes?.forks_count || 0,
+                    openIssues: detailsRes?.open_issues_count || 0,
+                    defaultBranch: detailsRes?.default_branch || 'main',
+                    activeBranchesCount: stats?.activeBranches || 0,
+                    openPRsCount: stats?.openPRs || 0,
+                    totalCommits,
+                    recentCommits: stats?.recentCommits || [],
+                    topContributors: contributors?.map(c => `${c.username} (${c.contributions} commits)`) || []
+                };
+            }
+        } catch (metadataErr) {
+            console.error("[AI Service] Failed to compile repo metadata for chat:", metadataErr.message);
+        }
+
+        // 4. Construct System Prompt grounding the AI
+        const systemPrompt = `You are "CommitStream AI Assistant", an advanced, friendly, and expert software engineer assistant.
+Your goal is to help developers understand, query, debug, and navigate the project codebase.
+You are currently in ${mode === 'codebase' ? 'Codebase RAG' : mode === 'branch' ? 'Branch Focus' : 'General AI'} mode.
+
+${repoMetadata ? `=== REPOSITORY METADATA ===
+- Repository: ${repoMetadata.name}
+- Description: ${repoMetadata.description}
+- Default Branch: ${repoMetadata.defaultBranch}
+- Stars: ${repoMetadata.stars} | Forks: ${repoMetadata.forks}
+- Total Commits: ${repoMetadata.totalCommits}
+- Open Issues: ${repoMetadata.openIssues} | Open Pull Requests: ${repoMetadata.openPRsCount}
+- Active Branches Count: ${repoMetadata.activeBranchesCount}
+- Top Contributors: ${repoMetadata.topContributors.join(', ')}
+- Recent Commits:
+${repoMetadata.recentCommits.map(c => `  * [${c.hash}] ${c.message} - by ${c.author} (${new Date(c.time).toLocaleDateString()})`).join('\n')}
+===========================` : ''}
+
+${contextText ? `=== CODEBASE CONTEXT (from default branch) ===\n${contextText}\n==============================================` : ''}
+${branchDiffContext ? `\n=== BRANCH DIFF CONTEXT ===\n${branchDiffContext}\n===========================` : ''}
+
+Using the codebase context, repository stats/metadata, and branch changes provided above, reply to the user's message.
+Be highly technical, write clean and elegant code snippets in your answers, and reference specific files, folders, or functions when applicable.
+If the query cannot be answered using the provided codebase context, answer using your general software engineering expertise, but clarify that the reference context did not specify the answer.`;
+
+        // 5. Incorporate history
+        let formattedPrompt = `${systemPrompt}\n\n`;
+        if (history && history.length > 0) {
+            formattedPrompt += `Conversation History:\n${history.map(h => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.text}`).join('\n')}\n`;
+        }
+        formattedPrompt += `User: ${query}\nAssistant:`;
+
+        const response = await generateContentWithRetry({
+            model: 'gemini-2.5-flash',
+            contents: formattedPrompt,
+        });
+
+        return response.text || "I was unable to compile an answer at this time.";
+    } catch (error) {
+        console.error("AI Repository Chatbot Failed:", error);
+        
+        // Return a friendly fallback explanation if Gemini is rate limited or experiencing a high-demand 503 spike
+        const isTransient = error.status === 429 || error.status === 503 || error.message?.includes('demand') || error.message?.includes('Spikes');
+        if (isTransient) {
+            return `⚠️ **The AI Model is currently experiencing a high volume of requests (HTTP 503/429).**\n\nI was unable to retrieve a live reply from Gemini, but I can confirm that your codebase is **indexed successfully** (or the branch comparison is active).\n\n**Suggestions to try:**\n1. Wait 5-10 seconds for the Gemini API load spike to subside, then try re-submitting your query.\n2. Verify that your \`GEMINI_API_KEY\` quota limits are not exceeded inside your Google AI Studio console.\n3. If you selected a branch, ensure it has active commits pushed to GitHub.`;
+        }
+        throw error;
     }
 };

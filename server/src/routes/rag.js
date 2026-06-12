@@ -3,6 +3,7 @@ import { authMiddleware } from '../middleware/auth.js';
 import User from '../models/User.js';
 import VectorDocument from '../models/VectorDocument.js';
 import { indexProjectCodebase } from '../utils/ragService.js';
+import { chatWithRepositoryAI } from '../utils/aiService.js';
 
 const router = express.Router();
 
@@ -81,6 +82,62 @@ router.get('/status', authMiddleware, async (req, res) => {
     } catch (error) {
         console.error('[RAG Route] Status check failed:', error);
         res.status(500).json({ message: error.message || 'Failed to check index status' });
+    }
+});
+
+/**
+ * @swagger
+ * /api/rag/chat:
+ *   post:
+ *     summary: Interact with the Repository AI Chatbot Assistant
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               projectId:
+ *                 type: string
+ *               message:
+ *                 type: string
+ *               history:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *               mode:
+ *                 type: string
+ *               branch:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Chat reply generated successfully
+ */
+router.post('/chat', authMiddleware, async (req, res) => {
+    try {
+        const { projectId, message, history, mode = 'codebase', branch } = req.body;
+        if (!projectId) {
+            return res.status(400).json({ message: 'Project ID is required' });
+        }
+        if (!message || !message.trim()) {
+            return res.status(400).json({ message: 'Message content is required' });
+        }
+
+        const user = await User.findById(req.user._id);
+        const pat = user?.githubAccessToken || user?.githubPat || null;
+
+        const reply = await chatWithRepositoryAI(projectId, message.trim(), history || [], {
+            mode,
+            branch,
+            pat
+        });
+
+        res.json({ reply });
+    } catch (error) {
+        console.error('[RAG Chat Route] Assistant failure:', error);
+        res.status(500).json({ message: error.message || 'Failed to get reply from repository assistant' });
     }
 });
 

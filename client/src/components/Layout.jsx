@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { GitMerge, Activity, LayoutDashboard, TerminalSquare, LogOut, Sun, Moon, PanelLeftClose, PanelLeftOpen, CheckSquare, ShieldCheck, Users, BarChart3, MessageSquare } from 'lucide-react';
+import { GitMerge, Activity, LayoutDashboard, TerminalSquare, LogOut, Sun, Moon, PanelLeftClose, PanelLeftOpen, CheckSquare, ShieldCheck, Users, BarChart3, MessageSquare, Bot } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useProject } from '../context/ProjectContext';
@@ -103,6 +103,17 @@ const Layout = () => {
                                 <MessageSquare className="w-4 h-4" />
                                 <span className="text-sm">Team Chat</span>
                             </NavLink>
+
+                            <NavLink
+                                to="/repo-chat"
+                                className={({ isActive }) => `
+                    flex items-center gap-3 px-3 py-2 rounded-md transition-colors
+                    ${isActive ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-slate-100'}
+                  `}
+                            >
+                                <Bot className="w-4 h-4" />
+                                <span className="text-sm">Repo AI Assistant</span>
+                            </NavLink>
                         </nav>
                     </div>
 
@@ -136,7 +147,7 @@ const Layout = () => {
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col relative overflow-hidden min-w-0">
                 {/* Topbar */}
-                <header className="h-14 border-b border-slate-200 dark:border-slate-800 flex items-center px-6 justify-between bg-white dark:bg-slate-900/20 backdrop-blur-sm z-10 sm:flex shrink-0">
+                <header className="h-14 border-b border-slate-200 dark:border-slate-800 flex items-center px-6 justify-between bg-white dark:bg-slate-900/20 backdrop-blur-sm z-30 sm:flex shrink-0">
                     <div className="flex items-center gap-4 text-sm">
                         <button 
                             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
