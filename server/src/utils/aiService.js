@@ -328,17 +328,17 @@ export const chatWithRepositoryAI = async (projectId, query, history = [], optio
         let branchDiffContext = '';
         let repoMetadata = null;
 
-        // 1. Fetch Codebase RAG context if in codebase or branch mode
-        if (mode === 'codebase' || mode === 'branch') {
-            try {
-                const chunks = await getRelevantContext(projectId, query, 5);
-                if (chunks && chunks.length > 0) {
-                    contextText = chunks.map((c, idx) => `[Snippet #${idx + 1} - File: ${c.metadata.filename}]\n${c.pageContent}`).join('\n---\n');
-                } else {
-                    contextText = 'No specific code snippets found for this query in the vector store.';
-                }
-            } catch (ragError) {
-                console.error("[AI Service] RAG retrieval failed for chat:", ragError.message);
+        // 1. Fetch Codebase RAG context (always query to ground any mode if relevant documents exist)
+        try {
+            const chunks = await getRelevantContext(projectId, query, 5);
+            if (chunks && chunks.length > 0) {
+                contextText = chunks.map((c, idx) => `[Snippet #${idx + 1} - File: ${c.metadata.filename}]\n${c.pageContent}`).join('\n---\n');
+            } else if (mode === 'codebase' || mode === 'branch') {
+                contextText = 'No specific code snippets found for this query in the vector store.';
+            }
+        } catch (ragError) {
+            console.error("[AI Service] RAG retrieval failed for chat:", ragError.message);
+            if (mode === 'codebase' || mode === 'branch') {
                 contextText = 'RAG search was unavailable due to an error.';
             }
         }
@@ -437,6 +437,13 @@ export const chatWithRepositoryAI = async (projectId, query, history = [], optio
 Your goal is to help developers understand, query, debug, and navigate the project codebase.
 You are currently in ${mode === 'codebase' ? 'Codebase RAG' : mode === 'branch' ? 'Branch Focus' : 'General AI'} mode.
 
+=== CRITICAL RESPONSE GUIDELINES ===
+1. **Be extremely concise, direct, and focused**: Answer the user's question directly. Do not include verbose filler, greetings, or conversational preambles (like "Sure, I can help you with that!"). Get straight to the point.
+2. **"Just enough" length**: Keep answers short, clear, and relevant. Provide only the exact code snippets, configuration, or explanations needed to answer the question.
+3. **Exact answers**: Focus on rendering the exact code snippet or config details requested. Do not explain standard library concepts or basic theory unless explicitly asked.
+4. **Context-Grounded**: Use the provided codebase context and repository metadata to give clear, grounded answers.
+====================================
+
 ${repoMetadata ? `=== REPOSITORY METADATA ===
 - Repository: ${repoMetadata.name}
 - Description: ${repoMetadata.description}
@@ -453,9 +460,7 @@ ${repoMetadata.recentCommits.map(c => `  * [${c.hash}] ${c.message} - by ${c.aut
 ${contextText ? `=== CODEBASE CONTEXT (from default branch) ===\n${contextText}\n==============================================` : ''}
 ${branchDiffContext ? `\n=== BRANCH DIFF CONTEXT ===\n${branchDiffContext}\n===========================` : ''}
 
-Using the codebase context, repository stats/metadata, and branch changes provided above, reply to the user's message.
-Be highly technical, write clean and elegant code snippets in your answers, and reference specific files, folders, or functions when applicable.
-If the query cannot be answered using the provided codebase context, answer using your general software engineering expertise, but clarify that the reference context did not specify the answer.`;
+Using the codebase context, repository stats/metadata, and branch changes provided above, reply to the user's message following the CRITICAL RESPONSE GUIDELINES.`;
 
         // 5. Incorporate history
         let formattedPrompt = `${systemPrompt}\n\n`;

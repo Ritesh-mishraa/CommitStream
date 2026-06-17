@@ -10,21 +10,27 @@ const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' 
 const highlightCode = (code, lang = '') => {
     if (!code) return '';
     
-    // We already have code with escaped &lt;, &gt;, &amp; from parseMarkdownToHTML
     let escaped = code;
     
-    // Store comments and strings to protect them from keyword highlighting
+    // Store comments, strings, and highlighted tokens to protect them
     const tokens = [];
     let tokenIdx = 0;
     const addToken = (html) => {
-        const placeholder = `___TOKEN_HL_${tokenIdx}___`;
+        // Generate a purely alphabetic placeholder to avoid matching digit/number regex
+        let placeholder = '___HLTOKEN';
+        let temp = tokenIdx;
+        do {
+            placeholder += String.fromCharCode(65 + (temp % 26));
+            temp = Math.floor(temp / 26);
+        } while (temp > 0);
+        placeholder += '___';
+        
         tokens.push({ placeholder, html });
         tokenIdx++;
         return placeholder;
     };
 
     // Alternation regex: matches JS/TS/Py strings and comments safely
-    // Match double quoted strings, single quoted strings, backtick strings, single line comments (// or #), and block comments (/* */)
     const stringAndCommentRegex = /("([^"\\]|\\.)*"|'([^'\\]|\\.)*'|`([^`\\]|\\.)*`|\/\/.*|\/\*[\s\S]*?\*\/|#.*)/g;
     
     escaped = escaped.replace(stringAndCommentRegex, (match) => {
@@ -37,21 +43,29 @@ const highlightCode = (code, lang = '') => {
 
     // 1. Keywords
     const keywords = /\b(const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|class|import|export|from|default|async|await|try|catch|finally|throw|new|this|typeof|instanceof|yield|def|elif|as|in|is|not|and|or|pass|lambda|except|raise|with|assert|global|nonlocal|null|undefined|true|false|void|public|private|protected|static|readonly|interface|type|extends|implements|any|string|number|boolean|unknown|never|set|get|constructor)\b/g;
-    escaped = escaped.replace(keywords, '<span class="text-pink-500 dark:text-pink-400 font-semibold">$1</span>');
+    escaped = escaped.replace(keywords, (match) => {
+        return addToken(`<span class="text-pink-500 dark:text-pink-400 font-semibold">${match}</span>`);
+    });
 
     // 2. Constants/Booleans/Built-ins
     const constants = /\b(true|false|null|undefined|NaN|Object|Array|Promise|String|Number|Boolean|Function|Symbol|Error|RegExp|Map|Set|Date|JSON|Math|console|window|document|process|global)\b/g;
-    escaped = escaped.replace(constants, '<span class="text-violet-500 dark:text-violet-400 font-medium">$1</span>');
+    escaped = escaped.replace(constants, (match) => {
+        return addToken(`<span class="text-violet-500 dark:text-violet-400 font-medium">${match}</span>`);
+    });
 
-    // 3. Numbers
-    const numbers = /\b(\d+(\.\d+)?)\b/g;
-    escaped = escaped.replace(numbers, '<span class="text-amber-500 dark:text-amber-400">$1</span>');
-
-    // 4. Functions (word followed by paren)
+    // 3. Functions (word followed by paren)
     const functions = /\b([a-zA-Z_$][a-zA-Z0-9_$]*)(?=\s*\()/g;
-    escaped = escaped.replace(functions, '<span class="text-blue-500 dark:text-blue-400">$1</span>');
+    escaped = escaped.replace(functions, (match) => {
+        return addToken(`<span class="text-blue-500 dark:text-blue-400">${match}</span>`);
+    });
 
-    // Restore comments and strings
+    // 4. Numbers
+    const numbers = /\b(\d+(\.\d+)?)\b/g;
+    escaped = escaped.replace(numbers, (match) => {
+        return addToken(`<span class="text-amber-500 dark:text-amber-400">${match}</span>`);
+    });
+
+    // Restore comments, strings, and tokens
     for (let i = tokens.length - 1; i >= 0; i--) {
         escaped = escaped.replace(tokens[i].placeholder, tokens[i].html);
     }
@@ -75,13 +89,21 @@ const parseMarkdownToHTML = (markdown) => {
         const highlighted = highlightCode(code.trim(), lang);
         const languageLabel = lang ? lang.toUpperCase() : 'CODE';
         return `<div class="my-5 rounded-xl border border-slate-800 dark:border-slate-850 overflow-hidden shadow-md bg-slate-950 dark:bg-slate-950/80 font-mono text-xs">
-            <div class="flex items-center justify-between px-4 py-2.5 bg-slate-900 dark:bg-slate-900/90 border-b border-slate-800/80 select-none">
+            <div class="flex items-center justify-between px-4 py-2 bg-slate-900 dark:bg-slate-900/90 border-b border-slate-800/80 select-none">
                 <div class="flex items-center gap-1.5">
                     <span class="w-2.5 h-2.5 rounded-full bg-rose-500/90"></span>
                     <span class="w-2.5 h-2.5 rounded-full bg-amber-500/90"></span>
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/90"></span>
                 </div>
-                <span class="text-[10px] font-bold text-slate-450 dark:text-slate-400 tracking-wider">${languageLabel}</span>
+                <div class="flex items-center gap-3">
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-400 tracking-wider">${languageLabel}</span>
+                    <button type="button" onclick="window.copyCodeToClipboard(this)" class="px-2 py-0.5 rounded text-[10px] font-semibold text-slate-450 dark:text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800/40 dark:border-slate-800 transition-all flex items-center gap-1 cursor-pointer">
+                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        <span>Copy</span>
+                    </button>
+                </div>
             </div>
             <pre class="p-4 overflow-x-auto text-slate-100 dark:text-slate-200 leading-relaxed"><code class="language-${lang}">${highlighted}</code></pre>
         </div>`;
@@ -91,8 +113,8 @@ const parseMarkdownToHTML = (markdown) => {
     html = html.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-slate-150 dark:bg-slate-800/80 font-mono text-[11px] font-semibold text-pink-650 dark:text-pink-400 border border-slate-200/60 dark:border-slate-700/50">$1</code>');
 
     // Headings
-    html = html.replace(/^### (.*?)$/gm, '<h3 class="text-sm font-bold text-slate-900 dark:text-white mt-4 mb-1.5">$1</h3>');
-    html = html.replace(/^## (.*?)$/gm, '<h2 class="text-base font-bold text-slate-900 dark:text-white mt-6 mb-2.5">$1</h2>');
+    html = html.replace(/^### (.*?)$/gm, '<h3 class="text-sm font-bold text-slate-900 dark:text-slate-100 mt-4 mb-1.5">$1</h3>');
+    html = html.replace(/^## (.*?)$/gm, '<h2 class="text-base font-bold text-slate-900 dark:text-slate-100 mt-6 mb-2.5">$1</h2>');
 
     // Bold & Italic
     html = html.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-slate-950 dark:text-white">$1</strong>');
@@ -105,7 +127,7 @@ const parseMarkdownToHTML = (markdown) => {
             .split(/\n\d+\.\s+/)
             .map(item => `<li class="mb-1.5">${item.replace(/^\d+\.\s+/, '')}</li>`)
             .join('\n');
-        return `<ol class="list-decimal pl-5 my-3 text-slate-650 dark:text-slate-350 text-sm">\n${items}\n</ol>`;
+        return `<ol class="list-decimal pl-5 my-3 text-slate-800 dark:text-slate-200 text-sm">\n${items}\n</ol>`;
     });
 
     // Unordered lists
@@ -115,7 +137,7 @@ const parseMarkdownToHTML = (markdown) => {
             .split(/\n[*-]\s+/)
             .map(item => `  <li class="pl-2 mb-1.5 relative before:content-['•'] before:absolute before:left-[-10px] before:text-blue-500">${item.replace(/^[*-]\s+/, '')}</li>`)
             .join('\n');
-        return `<ul class="list-none pl-5 my-3 text-slate-650 dark:text-slate-350 text-sm">\n${items}\n</ul>`;
+        return `<ul class="list-none pl-5 my-3 text-slate-800 dark:text-slate-200 text-sm">\n${items}\n</ul>`;
     });
 
     // Paragraphs
@@ -125,7 +147,7 @@ const parseMarkdownToHTML = (markdown) => {
         if (trimmed.startsWith('<h') || trimmed.startsWith('<pre') || trimmed.startsWith('<ul') || trimmed.startsWith('<ol') || trimmed.startsWith('<li') || trimmed.startsWith('<div')) {
             return trimmed;
         }
-        return `<p class="mb-4 leading-relaxed text-slate-700 dark:text-slate-350 text-sm">${trimmed.replace(/\n/g, '<br/>')}</p>`;
+        return `<p class="mb-4 leading-relaxed text-slate-800 dark:text-slate-200 text-sm">${trimmed.replace(/\n/g, '<br/>')}</p>`;
     }).join('\n');
 
     return html;
@@ -158,6 +180,38 @@ const RepoChat = () => {
     useEffect(() => {
         scrollToBottom();
     }, [messages, sending]);
+
+    useEffect(() => {
+        window.copyCodeToClipboard = (btn) => {
+            const container = btn.closest('.my-5');
+            if (!container) return;
+            const codeEl = container.querySelector('pre code');
+            if (!codeEl) return;
+            const codeText = codeEl.textContent || '';
+            
+            navigator.clipboard.writeText(codeText).then(() => {
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = `
+                    <svg class="w-3 h-3 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-emerald-500">Copied!</span>
+                `;
+                btn.classList.add('border-emerald-500/30', 'bg-emerald-500/10');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.classList.remove('border-emerald-500/30', 'bg-emerald-500/10');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+            });
+        };
+
+        return () => {
+            delete window.copyCodeToClipboard;
+        };
+    }, []);
 
     // Check codebase index status and fetch branches
     const checkIndexStatus = async () => {
@@ -516,7 +570,7 @@ const RepoChat = () => {
                                                 <p className="whitespace-pre-wrap leading-relaxed text-sm">{msg.text}</p>
                                             ) : (
                                                 <div 
-                                                    className="prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-350"
+                                                    className="text-slate-800 dark:text-slate-200 text-sm space-y-1"
                                                     dangerouslySetInnerHTML={{ __html: parseMarkdownToHTML(msg.text) }}
                                                 />
                                             )}
