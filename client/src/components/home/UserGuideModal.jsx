@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, X, KeyRound, Github, Target, CheckCircle2, Zap, CheckSquare, Activity, ShieldCheck, Users, ArrowRight } from 'lucide-react';
+import { BookOpen, X, KeyRound, Github, Target, CheckCircle2, Zap, CheckSquare, Activity, ShieldCheck, Users, ArrowRight, Bot, Sparkles, GitMerge } from 'lucide-react';
 
 const UserGuideModal = ({ isOpen, onClose, navigate }) => {
     if (!isOpen) return null;
@@ -104,7 +104,44 @@ const UserGuideModal = ({ isOpen, onClose, navigate }) => {
                             </div>
                         </section>
 
-                        {/* 2. Platform Modules */}
+                        {/* 2. Repo AI Chatbot (Detailed) */}
+                        <section>
+                            <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase mb-4 flex items-center gap-2">
+                                <Bot className="w-3.5 h-3.5 text-blue-500" /> Repo AI Chatbot (Detailed)
+                            </h3>
+                            <div className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm relative overflow-hidden pl-5 pr-5 py-5">
+                                {/* Vertical Line */}
+                                <div className="absolute left-[39px] top-8 bottom-8 w-px bg-slate-200 dark:bg-slate-800"></div>
+                                
+                                <div className="relative z-10 flex gap-4 items-start mb-6">
+                                    <div className="bg-slate-100 dark:bg-slate-800 ring-4 ring-white dark:ring-slate-900 text-slate-700 dark:text-slate-300 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 border border-slate-200 dark:border-slate-700">1</div>
+                                    <div className="pt-1.5">
+                                        <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">Index Codebase</h4>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Select your project and click <strong>"Index Codebase"</strong>. The AI digests your repository files into safe, vector embeddings to understand your project structure.</p>
+                                    </div>
+                                </div>
+                                <div className="relative z-10 flex gap-4 items-start mb-6">
+                                    <div className="bg-slate-100 dark:bg-slate-800 ring-4 ring-white dark:ring-slate-900 text-slate-700 dark:text-slate-300 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 border border-slate-200 dark:border-slate-700">2</div>
+                                    <div className="pt-1.5">
+                                        <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">Choose Operation Mode</h4>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                            Toggle between <strong>Codebase RAG</strong> to query files and directory layouts, <strong>Branch Focus</strong> to inspect specific branch diffs and modified lines, or <strong>General AI</strong> for standard engineering concepts.
+                                         </p>
+                                    </div>
+                                </div>
+                                <div className="relative z-10 flex gap-4 items-start">
+                                    <div className="bg-slate-900 dark:bg-slate-100 ring-4 ring-white dark:ring-slate-900 text-white dark:text-slate-900 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 shadow-sm">
+                                        <Sparkles className="w-4 h-4 text-amber-500" />
+                                    </div>
+                                    <div className="pt-1.5">
+                                        <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">Interact & Refactor</h4>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Submit natural language queries to explain functions, generate safe refactors, audit for bugs, or suggest conflict resolutions instantly.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* 3. Platform Modules */}
                         <section>
                             <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase mb-4 flex items-center gap-2">
                                 <Zap className="w-3.5 h-3.5" /> Workspace Modules
@@ -129,6 +166,16 @@ const UserGuideModal = ({ isOpen, onClose, navigate }) => {
                                     <Users className="w-4 h-4 text-slate-500 dark:text-slate-400 mb-2 group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors" />
                                     <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">Live Workspaces</h4>
                                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Chat in real-time and join built-in video huddles within the app.</p>
+                                </div>
+                                <div className="p-4 bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-sm group">
+                                    <Bot className="w-4 h-4 text-slate-500 dark:text-slate-400 mb-2 group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors" />
+                                    <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">Repo AI Assistant</h4>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Chat with files, analyze branch diffs, and query codebase architecture in real-time.</p>
+                                </div>
+                                <div className="p-4 bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl hover:border-slate-300 dark:hover:border-slate-700 transition-colors shadow-sm group">
+                                    <GitMerge className="w-4 h-4 text-slate-500 dark:text-slate-400 mb-2 group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors" />
+                                    <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">Conflict Predictor</h4>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Run isolated simulations to predict and visually resolve file collisions before merging.</p>
                                 </div>
                             </div>
                         </section>
